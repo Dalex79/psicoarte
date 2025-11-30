@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arte Psicodélico - Experiencia Interactiva</title>
+    <style>
+        /* --- ESTÉTICA GENERAL Y VARIABLES --- */
+        :root {
+            --acid-green: #ccff00;
+            --acid-pink: #ff0099;
+            --acid-cyan: #00ffff;
+            --acid-purple: #9d00ff;
+            --acid-orange: #ff6600;
+            --bg-deep: #050010;
+            --cursor-size: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-deep);
+            color: white;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            perspective: 1000px;
+            transition: background-color 0.5s, filter 0.1s;
+            cursor: default;
+        }
+
+        body.night-mode {
+            --bg-deep: #000000;
+            filter: invert(1) hue-rotate(180deg);
+        }
+
+        /* --- CURSOR PERSONALIZADO --- */
+        #custom-cursor {
+            position: fixed;
+            top: 0; left: 0;
+            width: var(--cursor-size); height: var(--cursor-size);
+            border: 2px solid white; border-radius: 50%;
+            pointer-events: none; z-index: 9999;
+            mix-blend-mode: difference;
+            transition: transform 0.1s;
+            box-shadow: 0 0 10px white;
+            opacity: 0.8;
+        }
+        
+        .cursor-trail {
+            position: fixed; width: 10px; height: 10px;
+            background: var(--acid-pink); border-radius: 50%;
+            pointer-events: none; z-index: 9998;
+            opacity: 0.7; animation: fadeOut 0.5s forwards;
+        }
+
+        @keyframes fadeOut { to { opacity: 0; transform: scale(0); } }
+
+        /* --- FONDO VIVO --- */
+        #bg-canvas {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2; filter: blur(2px) contrast(1.5);
+        }
+
+        /* --- CONTENEDOR 3D --- */
+        #world-wrapper {
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            will-change: transform;
+        }
+
+        /* --- SECCIONES --- */
+        section {
+            min-height: 100vh; padding: 40px;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+
+        h1 {
+            font-size: 5rem; text-transform: uppercase; text-align: center;
+            animation: glitch-text 3s infinite;
+            text-shadow: 4px 4px 0px var(--acid-purple);
+            mix-blend-mode: screen; line-height: 0.9; margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 2.5rem; color: var(--acid-cyan);
+            text-shadow: 0 0 10px var(--acid-cyan);
+            margin-bottom: 1rem; text-transform: uppercase;
+        }
+        
+        p.poetic-desc {
+            font-size: 1.2rem; max-width: 600px; text-align: center;
+            opacity: 0.8; font-style: italic; margin-bottom: 30px; color: #ddd;
+        }
+
+        /* --- BOTONES --- */
+        button {
+            background: rgba(0,0,0,0.5);
+            color: white; border: 2px solid var(--acid-green);
+            padding: 15px 30px; font-size: 1.2rem; font-family: inherit;
+            margin: 10px; transition: 0.3s;
+            position: relative; overflow: hidden;
+            box-shadow: 0 0 15px rgba(204, 255, 0, 0.2);
+            cursor: pointer; z-index: 10; /* Asegurar que estén sobre el canvas */
+        }
+
+        button:hover {
+            background: var(--acid-green); color: black;
+            box-shadow: 0 0 30px var(--acid-green);
+            transform: scale(1.1) rotate(-2deg);
+        }
+        
+        button:active { transform: scale(0.95); }
+
+        /* --- ZONAS DE CANVAS --- */
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(255, 0, 153, 0.3);
+            border: 4px double var(--acid-pink);
+            /* Importante: para que los clics funcionen bien dentro */
+            z-index: 5; 
+            background: black;
+        }
+        /* Solo el cursor personalizado dentro del canvas */
+        #paint-canvas, #fractal-canvas, #gen-canvas, #chaos-canvas, #gravity-canvas {
+            cursor: none; 
+            touch-action: none;
+        }
+
+        /* --- ESTILOS DE JUEGO / GALERÍA --- */
+        #game-area {
+            width: 90%; height: 70vh;
+            border: 2px dashed var(--acid-cyan);
+            position: relative; overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+            cursor: none; z-index: 5;
+        }
+        .game-entity {
+            position: absolute; transition: filter 0.3s;
+            mix-blend-mode: hard-light; cursor: grab;
+        }
+
+        .gallery-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px; width: 100%; max-width: 1200px;
+        }
+        .style-box {
+            height: 250px; border: 1px solid rgba(255,255,255,0.2);
+            position: relative; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: bold; transition: 0.5s; cursor: pointer;
+        }
+        .cubism-box { background: linear-gradient(135deg, #f09, #30f); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+        .surreal-box { background: radial-gradient(circle, #ff0, #f00); border-radius: 50%; width: 250px; margin: auto; }
+        .pop-box { background: white; color: black; background-image: radial-gradient(black 20%, transparent 20%); background-size: 20px 20px; }
+        .op-box { background: repeating-radial-gradient(black, white 10px, black 20px); animation: pulse-op 2s infinite linear; }
+        .abstract-box { background: #111; }
+
+        .poetry-text {
+            font-size: 2rem; max-width: 800px; text-align: center;
+            opacity: 0; filter: blur(10px); transform: scale(0.8);
+            transition: 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .poetry-visible {
+            opacity: 1; filter: blur(0); transform: scale(1);
+            animation: text-smoke 3s infinite alternate;
+        }
+
+        /* --- ANIMACIONES --- */
+        @keyframes glitch-text {
+            0% { transform: translate(0); text-shadow: 4px 4px 0px var(--acid-purple); }
+            20% { transform: translate(-5px, 5px); text-shadow: -4px -4px 0px var(--acid-green); clip-path: inset(0 0 50% 0); }
+            40% { transform: translate(5px, -5px); text-shadow: 4px -4px 0px var(--acid-cyan); clip-path: inset(50% 0 0 0); }
+            60% { transform: translate(0); clip-path: inset(0 0 0 0); }
+            100% { transform: translate(0); }
+        }
+        @keyframes pulse-op {
+            0% { background-size: 100% 100%; }
+            50% { background-size: 150% 150%; }
+            100% { background-size: 100% 100%; }
+        }
+        @keyframes text-smoke {
+            from { text-shadow: 0 0 10px var(--acid-pink); filter: hue-rotate(0deg); }
+            to { text-shadow: 0 -20px 20px var(--acid-cyan); filter: hue-rotate(90deg); }
+        }
+
+        .noise-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 999; opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body>
+
+    <div class="noise-overlay"></div>
+    <div id="custom-cursor"></div>
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="world-wrapper">
+        
+        <!-- HERO -->
+        <section id="hero">
+            <h1>VIAJE<br><span style="font-size:0.5em; color:var(--acid-green)">AL COSMOS MENTAL</span></h1>
+            <p class="poetic-desc">Arte, Matemáticas, Física y Psicodelia.</p>
+            <p>Scrollea para experimentar los laboratorios.</p>
+            <button onclick="toggleNightMode()">🌑 Noche Cósmica</button>
+        </section>
+
+        <!-- 1. PAINT PSICODÉLICO (CORREGIDO) -->
+        <section id="paint">
+            <h2>Lienzo Fractal</h2>
+            <p class="poetic-desc">Tu pincel altera la realidad. Dibuja rápido para trazos finos, lento para gruesos.</p>
+            <div class="canvas-container">
+                <canvas id="paint-canvas" width="800" height="500"></canvas>
+            </div>
+            <!-- Contenedor de controles con z-index explícito para asegurar clicks -->
+            <div style="margin-top:20px; display:flex; flex-wrap:wrap; justify-content:center; position:relative; z-index:20;">
+                <button onclick="window.p_melt()">🫠 Derretir</button>
+                <button onclick="window.p_fracture()">⚡ Fracturar</button>
+                <button onclick="window.p_toggleKaleido()" id="btn-kaleido">🌀 Kaleido Mode: OFF</button>
+                <button onclick="window.p_clear()">❌ Borrar</button>
+            </div>
+        </section>
+
+        <!-- NUEVO: ATRACTOR DEL CAOS (MATEMÁTICAS) -->
+        <section id="chaos">
+            <h2>El Atractor del Caos</h2>
+            <p class="poetic-desc">Visualizando el "Efecto Mariposa" (Ecuaciones de Lorenz). El orden nace del desorden.</p>
+            <div class="canvas-container">
+                <canvas id="chaos-canvas" width="600" height="500"></canvas>
+            </div>
+            <p><small>Mueve el mouse para perturbar las variables matemáticas.</small></p>
+            <button onclick="window.chaos_reset()">Reiniciar Caos</button>
+        </section>
+
+        <!-- NUEVO: GRAVEDAD DE PARTÍCULAS (FÍSICA) -->
+        <section id="physics">
+            <h2>Sinfonía Gravitacional</h2>
+            <p class="poetic-desc">Simulación de N-Cuerpos. Cada punto tiene masa y atrae a los demás.</p>
+            <div class="canvas-container" style="border-color: var(--acid-green);">
+                <canvas id="gravity-canvas" width="800" height="500"></canvas>
+            </div>
+            <p><small>Clic izquierdo: Crear agujero negro temporal. Clic derecho: Repulsión.</small></p>
+            <button onclick="window.grav_reset()">Big Bang (Reset)</button>
+        </section>
+
+        <!-- 6. ZONA FRACTAL -->
+        <section id="fractal-zone">
+            <h2>Vórtice Geométrico</h2>
+            <p class="poetic-desc">Geometría sagrada en tiempo real.</p>
+            <canvas id="fractal-canvas" width="600" height="600" style="border-radius:50%; box-shadow: 0 0 50px var(--acid-purple);"></canvas>
+        </section>
+
+        <!-- 4. JUEGO ARTE VIVO XL -->
+        <section id="game">
+            <h2>Collage en Gravedad Cero</h2>
+            <p class="poetic-desc">Entidades vivas flotando en el vacío digital.</p>
+            <div id="game-area"></div>
+            <p><small>Arrastra | Clic (Clonar) | Doble clic (Mutar)</small></p>
+        </section>
+
+        <!-- 5. GENERADOR MUTANTE -->
+        <section id="generator">
+            <h2>Generador de Visiones</h2>
+            <p class="poetic-desc">Algoritmos soñando con formas.</p>
+            <canvas id="gen-canvas" width="500" height="500" style="border: 2px solid white;"></canvas>
+            <div style="margin-top:10px; position:relative; z-index:20;">
+                <button onclick="window.g_generate()">👁️ Revelar Visión</button>
+                <button onclick="window.g_toggleHypno()" id="btn-hypno">😵 Hipnosis: OFF</button>
+            </div>
+        </section>
+
+        <!-- 7. GALERÍA INTERACTIVA -->
+        <section id="gallery">
+            <h2>Galería de Estilos</h2>
+            <div class="gallery-grid">
+                <div class="style-box cubism-box" onmousemove="window.cubismEffect(this)" onmouseleave="window.resetStyle(this)">CUBISMO</div>
+                <div class="style-box surreal-box" onmouseenter="window.surrealMelt(this)">SURREAL</div>
+                <div class="style-box pop-box" onclick="window.popExplode(this)">POP ART!</div>
+                <div class="style-box op-box">OP ART</div>
+                <div class="style-box abstract-box" id="abstract-container">ABSTRACTO</div>
+            </div>
+        </section>
+
+        <!-- 8. POESÍA -->
+        <section id="poetry">
+            <h2>Oráculo</h2>
+            <div class="poetry-text" id="poem-display">"El caos es un orden por descifrar."</div>
+            <button onclick="window.newPoem()">✨ Revelación</button>
+        </section>
+
+    </div>
+
+    <script>
+        // --- INICIALIZACIÓN DE AUDIO ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type, freq, duration) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = type; 
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // --- SISTEMA DE MOUSE GLOBAL ---
+        const cursor = document.getElementById('custom-cursor');
+        const world = document.getElementById('world-wrapper');
+        let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursor.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+            if(Math.random() > 0.8) createTrail(mouseX, mouseY);
+            
+            // 3D Tilt sutil
+            const xPercent = (mouseX / window.innerWidth) - 0.5;
+            const yPercent = (mouseY / window.innerHeight) - 0.5;
+            world.style.transform = `rotateY(${xPercent * 2}deg) rotateX(${-yPercent * 2}deg)`;
+        });
+
+        document.addEventListener('mousedown', () => {
+            cursor.style.transform += ' scale(0.8)';
+            cursor.style.backgroundColor = 'white';
+        });
+        document.addEventListener('mouseup', () => {
+            cursor.style.backgroundColor = 'transparent';
+        });
+
+        function createTrail(x, y) {
+            const dot = document.createElement('div');
+            dot.classList.add('cursor-trail');
+            dot.style.left = x + 'px'; dot.style.top = y + 'px';
+            dot.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            document.body.appendChild(dot);
+            setTimeout(() => dot.remove(), 500);
+        }
+
+        // --- FONDO VIVO ---
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let bgW, bgH;
+        let particles = [];
+
+        function resizeBg() {
+            bgW = bgCanvas.width = window.innerWidth;
+            bgH = bgCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeBg);
+        resizeBg();
+
+        class CosmoParticle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * bgW; this.y = Math.random() * bgH;
+                this.size = Math.random() * 2;
+                this.speed = Math.random() * 1 + 0.2;
+                this.angle = Math.random() * Math.PI * 2;
+                this.hue = Math.random() * 360;
+                this.life = 0;
+            }
+            update() {
+                this.angle += (Math.random() - 0.5) * 0.1;
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+                this.hue += 0.5; this.life++;
+                if (this.x < 0 || this.x > bgW || this.y < 0 || this.y > bgH || this.life > 600) this.reset();
+            }
+            draw() {
+                bgCtx.fillStyle = `hsla(${this.hue}, 80%, 60%, 0.5)`;
+                bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI*2); bgCtx.fill();
+            }
+        }
+        for(let i=0; i<150; i++) particles.push(new CosmoParticle());
+
+        function animateBg() {
+            bgCtx.fillStyle = document.body.classList.contains('night-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(5, 0, 16, 0.1)';
+            bgCtx.fillRect(0, 0, bgW, bgH);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateBg);
+        }
+        animateBg();
+
+        // ---------------------------------------------------------
+        // --- 1. PAINT PSICODÉLICO (FUNCIONES EXPUESTAS A WINDOW) ---
+        // ---------------------------------------------------------
+        const pCanvas = document.getElementById('paint-canvas');
+        const pCtx = pCanvas.getContext('2d');
+        let pPainting = false;
+        let pLastX = 0, pLastY = 0;
+        let pHue = 0;
+        let pKaleido = false;
+
+        // Aseguramos que las coordenadas del mouse sean relativas al canvas
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top
+            };
+        }
+
+        pCanvas.addEventListener('mousedown', e => {
+            pPainting = true;
+            const pos = getMousePos(pCanvas, e);
+            pLastX = pos.x; pLastY = pos.y;
+        });
+
+        pCanvas.addEventListener('mousemove', e => {
+            if(!pPainting) return;
+            const pos = getMousePos(pCanvas, e);
+            const dist = Math.hypot(pos.x - pLastX, pos.y - pLastY);
+            const lineWidth = Math.max(2, 30 - dist);
+
+            pCtx.lineWidth = lineWidth;
+            pCtx.lineCap = 'round';
+            pCtx.strokeStyle = `hsl(${pHue}, 100%, 50%)`;
+            pCtx.shadowBlur = 10;
+            pCtx.shadowColor = pCtx.strokeStyle;
+
+            if (pKaleido) {
+                const cx = pCanvas.width / 2;
+                const cy = pCanvas.height / 2;
+                const sides = 8;
+                const angleStep = (Math.PI * 2) / sides;
+                
+                pCtx.save();
+                pCtx.translate(cx, cy);
+                for(let i=0; i<sides; i++) {
+                    pCtx.rotate(angleStep);
+                    pCtx.beginPath();
+                    pCtx.moveTo(pLastX - cx, pLastY - cy);
+                    pCtx.lineTo(pos.x - cx, pos.y - cy);
+                    pCtx.stroke();
+                }
+                pCtx.restore();
+            } else {
+                pCtx.beginPath();
+                pCtx.moveTo(pLastX, pLastY);
+                pCtx.lineTo(pos.x, pos.y);
+                pCtx.stroke();
+            }
+
+            pLastX = pos.x; pLastY = pos.y;
+            pHue+=5;
+        });
+
+        window.addEventListener('mouseup', () => pPainting = false);
+
+        // Funciones globales para botones
+        window.p_clear = function() { 
+            pCtx.clearRect(0,0, pCanvas.width, pCanvas.height); 
+            playSound('sawtooth', 100, 0.2);
+        };
+        
+        window.p_melt = function() {
+            playSound('sine', 200, 0.5);
+            const w = pCanvas.width; const h = pCanvas.height;
+            // Copiar el canvas actual
+            const imageData = pCtx.getImageData(0, 0, w, h);
+            // Dibujarlo de nuevo ligeramente desplazado y estirado
+            pCtx.globalAlpha = 0.9;
+            pCtx.drawImage(pCanvas, -2, 5, w + 4, h + 2);
+            pCtx.globalAlpha = 1.0;
+        };
+
+        window.p_fracture = function() {
+            playSound('square', 150, 0.1);
+            const w = pCanvas.width; const h = pCanvas.height;
+            for(let i=0; i<15; i++) {
+                const x = Math.random() * w; const y = Math.random() * h;
+                const sw = Math.random() * 100 + 20; const sh = Math.random() * 100 + 20;
+                const dx = (Math.random() - 0.5) * 60; const dy = (Math.random() - 0.5) * 60;
+                try {
+                    const chunk = pCtx.getImageData(x, y, sw, sh);
+                    pCtx.putImageData(chunk, x + dx, y + dy);
+                    pCtx.strokeStyle = `rgba(255,255,255,0.5)`;
+                    pCtx.strokeRect(x+dx, y+dy, sw, sh);
+                } catch(e){}
+            }
+        };
+
+        window.p_toggleKaleido = function() {
+            pKaleido = !pKaleido;
+            const btn = document.getElementById('btn-kaleido');
+            btn.innerText = pKaleido ? "🌀 Kaleido Mode: ON" : "🌀 Kaleido Mode: OFF";
+            btn.style.borderColor = pKaleido ? "var(--acid-pink)" : "var(--acid-green)";
+            playSound('sine', pKaleido ? 600 : 300, 0.1);
+        };
+
+        // ---------------------------------------------------------
+        // --- 2. EL ATRACTOR DEL CAOS (Lorenz Attractor) ---
+        // ---------------------------------------------------------
+        const cCanvas = document.getElementById('chaos-canvas');
+        const cCtx = cCanvas.getContext('2d');
+        let chaosPoints = [];
+        
+        // CORRECCIÓN: Nombres de variables únicos para evitar colisiones
+        let lz_x = 0.1, lz_y = 0, lz_z = 0;
+        let lorenz_sigma = 10, lorenz_rho = 28, lorenz_beta = 8.0/3.0; 
+
+        function initChaos() {
+            cCtx.fillStyle = 'black';
+            cCtx.fillRect(0,0, cCanvas.width, cCanvas.height);
+            lz_x=0.1; lz_y=0; lz_z=0;
+            chaosPoints = [];
+        }
+        initChaos();
+
+        window.chaos_reset = function() { initChaos(); playSound('triangle', 200, 1); }
+
+        function drawChaos() {
+            // Ecuaciones diferenciales (Euler integration)
+            let dt = 0.01;
+            let dx = (lorenz_sigma * (lz_y - lz_x)) * dt;
+            let dy = (lz_x * (lorenz_rho - lz_z) - lz_y) * dt;
+            let dz = (lz_x * lz_y - lorenz_beta * lz_z) * dt;
+            lz_x += dx; lz_y += dy; lz_z += dz;
+
+            chaosPoints.push({x: lz_x, y: lz_y, z: lz_z, h: (lz_z*5)%360});
+            if(chaosPoints.length > 2000) chaosPoints.shift();
+
+            // Dibujar
+            cCtx.fillStyle = 'rgba(0,0,0,0.1)'; // Estela
+            cCtx.fillRect(0,0,cCanvas.width, cCanvas.height);
+            
+            cCtx.beginPath();
+            if(chaosPoints.length > 0) {
+                // Escalar y centrar
+                let scale = 10;
+                let offX = cCanvas.width/2;
+                let offY = cCanvas.height/2 + 50;
+                
+                cCtx.moveTo(chaosPoints[0].x * scale + offX, chaosPoints[0].y * scale + offY);
+                for(let i=1; i<chaosPoints.length; i++) {
+                    let p = chaosPoints[i];
+                    cCtx.strokeStyle = `hsl(${p.h}, 100%, 50%)`;
+                    cCtx.lineTo(p.x * scale + offX, p.y * scale + offY);
+                    cCtx.stroke();
+                    cCtx.beginPath();
+                    cCtx.moveTo(p.x * scale + offX, p.y * scale + offY);
+                }
+            }
+            
+            // Perturbación con el mouse
+            let distToCenter = Math.abs(mouseX - window.innerWidth/2);
+            lorenz_sigma = 10 + (distToCenter * 0.01); // Modificar constante A con mouse
+
+            requestAnimationFrame(drawChaos);
+        }
+        drawChaos();
+
+        // ---------------------------------------------------------
+        // --- 3. GRAVEDAD DE PARTÍCULAS (N-Body Physics) ---
+        // ---------------------------------------------------------
+        const gvCanvas = document.getElementById('gravity-canvas');
+        const gvCtx = gvCanvas.getContext('2d');
+        let bodies = [];
+
+        class Body {
+            constructor(x, y, m) {
+                this.x = x; this.y = y;
+                this.vx = (Math.random()-0.5)*2; 
+                this.vy = (Math.random()-0.5)*2;
+                this.mass = m;
+                this.color = m > 20 ? 'white' : `hsl(${Math.random()*360}, 100%, 60%)`;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                // Rebote suave
+                if(this.x < 0 || this.x > gvCanvas.width) this.vx *= -0.8;
+                if(this.y < 0 || this.y > gvCanvas.height) this.vy *= -0.8;
+            }
+            draw() {
+                gvCtx.fillStyle = this.color;
+                gvCtx.beginPath();
+                gvCtx.arc(this.x, this.y, Math.sqrt(this.mass), 0, Math.PI*2);
+                gvCtx.fill();
+            }
+        }
+
+        function initGravity() {
+            bodies = [];
+            for(let i=0; i<60; i++) {
+                bodies.push(new Body(
+                    Math.random()*gvCanvas.width, 
+                    Math.random()*gvCanvas.height, 
+                    Math.random()*10 + 2
+                ));
+            }
+        }
+        initGravity();
+        window.grav_reset = initGravity;
+
+        function gravityLoop() {
+            gvCtx.fillStyle = 'rgba(0,0,0,0.2)'; // Estela
+            gvCtx.fillRect(0,0, gvCanvas.width, gvCanvas.height);
+
+            // Interacción del mouse
+            const rect = gvCanvas.getBoundingClientRect();
+            let mx = mouseX - rect.left;
+            let my = mouseY - rect.top;
+
+            for(let i=0; i<bodies.length; i++) {
+                let b1 = bodies[i];
+                for(let j=i+1; j<bodies.length; j++) {
+                    let b2 = bodies[j];
+                    let dx = b2.x - b1.x;
+                    let dy = b2.y - b1.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist > 5 && dist < 300) {
+                        let f = (b1.mass * b2.mass) / (dist*dist); // Ley Gravitación
+                        let fx = (dx/dist) * f * 0.5;
+                        let fy = (dy/dist) * f * 0.5;
+                        b1.vx += fx/b1.mass; b1.vy += fy/b1.mass;
+                        b2.vx -= fx/b2.mass; b2.vy -= fy/b2.mass;
+                        
+                        // Línea de conexión visual
+                        if(dist < 100) {
+                            gvCtx.strokeStyle = `rgba(255,255,255,${0.1 - dist/1000})`;
+                            gvCtx.lineWidth = 1;
+                            gvCtx.beginPath(); gvCtx.moveTo(b1.x, b1.y); gvCtx.lineTo(b2.x, b2.y); gvCtx.stroke();
+                        }
+                    }
+                }
+                
+                // Mouse gravity (Agujero negro temporal)
+                if(mx > 0 && mx < gvCanvas.width && my > 0 && my < gvCanvas.height) {
+                    let dmx = mx - b1.x;
+                    let dmy = my - b1.y;
+                    let dmd = Math.sqrt(dmx*dmx + dmy*dmy);
+                    if(dmd > 5) {
+                        let force = 0.5;
+                        b1.vx += (dmx/dmd) * force;
+                        b1.vy += (dmy/dmd) * force;
+                    }
+                }
+
+                b1.update();
+                b1.draw();
+            }
+            requestAnimationFrame(gravityLoop);
+        }
+        gravityLoop();
+
+        // ---------------------------------------------------------
+        // --- 4. OTROS JUEGOS Y UTILIDADES ---
+        // ---------------------------------------------------------
+        
+        // FRACTAL ZONE
+        const fCanvas = document.getElementById('fractal-canvas');
+        const fCtx = fCanvas.getContext('2d');
+        let fTime = 0;
+        function drawFractal() {
+            fCtx.fillStyle = 'rgba(0,0,0,0.1)';
+            fCtx.fillRect(0,0,600,600);
+            fCtx.save();
+            fCtx.translate(300, 300);
+            let distM = (mouseX / window.innerWidth) * 2;
+            for(let i=0; i<30; i++) {
+                fCtx.rotate(fTime * 0.0005 * (i%2==0 ? 1 : -1) + distM);
+                fCtx.beginPath();
+                const radius = 20 + i * 8 + Math.sin(fTime * 0.05 + i)*10;
+                fCtx.strokeStyle = `hsl(${(fTime*2 + i*10)%360}, 100%, 50%)`;
+                fCtx.lineWidth = 2;
+                for(let j=0; j<6; j++) {
+                    const ang = (Math.PI*2/6) * j;
+                    fCtx[j===0?'moveTo':'lineTo'](Math.cos(ang)*radius, Math.sin(ang)*radius);
+                }
+                fCtx.closePath(); fCtx.stroke();
+            }
+            fCtx.restore();
+            fTime++;
+            requestAnimationFrame(drawFractal);
+        }
+        drawFractal();
+
+        // GAME AREA (COLLAGE)
+        const gameArea = document.getElementById('game-area');
+        let entities = [];
+        class Entity {
+            constructor(x, y) {
+                this.element = document.createElement('div');
+                this.element.classList.add('game-entity');
+                this.w = Math.random() * 80 + 30; this.h = this.w;
+                this.element.style.width = this.w + 'px'; this.element.style.height = this.h + 'px';
+                this.type = Math.floor(Math.random()*4);
+                if(this.type === 0) this.element.style.borderRadius = '50%';
+                else if(this.type === 2) this.element.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+                this.element.style.backgroundColor = `hsl(${Math.random()*360}, 100%, 50%)`;
+                this.x = x || Math.random() * (gameArea.clientWidth - this.w);
+                this.y = y || Math.random() * (gameArea.clientHeight - this.h);
+                this.vx = (Math.random() - 0.5) * 4; this.vy = (Math.random() - 0.5) * 4;
+                this.element.addEventListener('mousedown', (e) => this.dragStart(e));
+                this.element.addEventListener('dblclick', (e) => this.mutate(e));
+                gameArea.appendChild(this.element);
+                entities.push(this);
+            }
+            update() {
+                if(this.isDragging) return;
+                this.x += this.vx; this.y += this.vy;
+                if(this.x <= 0 || this.x >= gameArea.clientWidth - this.w) this.vx *= -1;
+                if(this.y <= 0 || this.y >= gameArea.clientHeight - this.h) this.vy *= -1;
+                this.element.style.left = this.x + 'px'; this.element.style.top = this.y + 'px';
+                this.element.style.transform = `rotate(${this.x}deg)`;
+            }
+            dragStart(e) {
+                e.stopPropagation();
+                let startX = e.clientX, startY = e.clientY;
+                this.isDragging = true;
+                const onMove = (mv) => {
+                    const rect = gameArea.getBoundingClientRect();
+                    this.x = mv.clientX - rect.left - this.w/2;
+                    this.y = mv.clientY - rect.top - this.h/2;
+                    this.element.style.left = this.x + 'px';
+                    this.element.style.top = this.y + 'px';
+                    this.vx = mv.movementX; this.vy = mv.movementY;
+                };
+                const onUp = (up) => {
+                    this.isDragging = false;
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('mouseup', onUp);
+                    if(Math.hypot(up.clientX - startX, up.clientY - startY) < 5) {
+                        new Entity(this.x + 20, this.y + 20); playSound('sine', 600, 0.1);
+                    }
+                };
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', onUp);
+            }
+            mutate(e) {
+                e.stopPropagation();
+                this.element.style.filter = "invert(1) blur(2px) contrast(2)";
+                this.element.style.transform += " scale(1.5) rotate(45deg)";
+                this.vx=0; this.vy=0; playSound('sawtooth', 50, 0.5);
+            }
+        }
+        function gameLoop() { entities.forEach(e => e.update()); requestAnimationFrame(gameLoop); }
+        for(let i=0; i<6; i++) new Entity();
+        gameLoop();
+
+        // GENERATOR
+        const gCanvas = document.getElementById('gen-canvas');
+        const gCtx = gCanvas.getContext('2d');
+        let hypnoMode = false;
+        
+        window.g_generate = function() {
+            gCtx.setTransform(1, 0, 0, 1, 0, 0);
+            gCtx.fillStyle = `hsl(${Math.random()*360}, 50%, 10%)`; gCtx.fillRect(0,0,500,500);
+            for(let i=0; i<20; i++) {
+                gCtx.fillStyle = `hsla(${Math.random()*360}, 100%, 50%, ${Math.random()})`;
+                gCtx.beginPath();
+                const x = Math.random()*500, y = Math.random()*500, s = Math.random()*100;
+                if(Math.random()<0.5) gCtx.arc(x,y,s,0,Math.PI*2); else gCtx.fillRect(x,y,s,s);
+                gCtx.fill();
+            }
+            playSound('sawtooth', 200 + Math.random()*800, 0.3);
+        }
+        window.g_toggleHypno = function() {
+            hypnoMode = !hypnoMode;
+            document.getElementById('btn-hypno').innerText = hypnoMode ? "😵 Hipnosis: ON" : "😵 Hipnosis: OFF";
+            if(hypnoMode) animateHypno();
+        }
+        let hypnoAngle = 0;
+        function animateHypno() {
+            if(!hypnoMode) return;
+            const temp = document.createElement('canvas'); temp.width=500; temp.height=500;
+            temp.getContext('2d').drawImage(gCanvas,0,0);
+            gCtx.clearRect(0,0,500,500); gCtx.save();
+            gCtx.translate(250,250); gCtx.rotate(0.02); gCtx.scale(1.01,1.01);
+            gCtx.translate(-250,-250); gCtx.drawImage(temp,0,0);
+            gCtx.restore();
+            requestAnimationFrame(animateHypno);
+        }
+        window.g_generate();
+
+        // GALERIA
+        window.cubismEffect = function(el) { el.style.clipPath = `polygon(${Math.random()*30}% 0, 100% ${Math.random()*30}%, ${100-Math.random()*30}% 100%, 0 ${100-Math.random()*30}%)`; }
+        window.resetStyle = function(el) { el.style.clipPath = 'polygon(0 0, 100% 0, 100% 100%, 0 100%)'; }
+        window.surrealMelt = function(el) { el.style.borderRadius = '40% 60% 70% 30% / 40% 50% 60% 50%'; el.style.transform = 'scaleY(1.2) rotate(10deg)'; }
+        window.popExplode = function(el) { playSound('square', 150, 0.1); el.style.transform="scale(1.2)"; setTimeout(()=>el.style.transform="scale(1)", 200); }
+
+        const absBox = document.getElementById('abstract-container');
+        absBox.addEventListener('mousemove', (e) => {
+             const d = document.createElement('div');
+             d.style.width='10px'; d.style.height='10px'; d.style.background='white';
+             d.style.position='absolute'; 
+             d.style.left = (e.clientX - absBox.getBoundingClientRect().left)+'px';
+             d.style.top = (e.clientY - absBox.getBoundingClientRect().top)+'px';
+             d.style.borderRadius='50%'; d.style.animation='fadeOut 1s forwards';
+             absBox.appendChild(d); setTimeout(()=>d.remove(),1000);
+        });
+
+        // POESIA
+        const poems = ["El caos es un orden por descifrar.", "La matemática es el lenguaje del sueño de Dios.", "La gravedad es el abrazo del universo.", "Fractales: el infinito en la palma de tu mano."];
+        window.newPoem = function() {
+            const pText = document.getElementById('poem-display');
+            pText.classList.remove('poetry-visible');
+            setTimeout(() => {
+                pText.innerText = poems[Math.floor(Math.random() * poems.length)];
+                pText.classList.add('poetry-visible');
+                playSound('sine', 440, 0.5);
+            }, 1000);
+        }
+        setTimeout(() => document.getElementById('poem-display').classList.add('poetry-visible'), 500);
+
+        window.toggleNightMode = function() { document.body.classList.toggle('night-mode'); }
+
+    </script>
+</body>
+</html>

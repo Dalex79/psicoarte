@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historia Psicodélica - La Máquina del Tiempo</title>
+    <style>
+        :root {
+            --retro-sepia: #f4e4bc;
+            --retro-brown: #5d4037;
+            --neon-gold: #ffd700;
+            --neon-blue: #00ffff;
+            --neon-red: #ff3333;
+            --steam-bg: #1a1a1a;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--steam-bg);
+            color: var(--retro-sepia);
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            text-align: center;
+        }
+
+        /* --- FONDO ANIMADO (ENGRANAJES DEL TIEMPO) --- */
+        #bg-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; opacity: 0.2; pointer-events: none;
+        }
+
+        /* --- ESTILOS GENERALES --- */
+        section {
+            min-height: 90vh;
+            padding: 40px 20px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border-bottom: 4px double var(--retro-brown);
+            position: relative;
+        }
+
+        h1 {
+            font-size: 3.5rem; margin-bottom: 0;
+            text-shadow: 4px 4px 0 var(--retro-brown);
+            color: var(--neon-gold);
+            text-transform: uppercase;
+        }
+        
+        h2 {
+            font-size: 2.5rem; color: var(--neon-blue);
+            text-transform: uppercase; letter-spacing: 2px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0 black;
+        }
+
+        p { font-size: 1.2rem; max-width: 700px; line-height: 1.5; color: #ccc; margin-bottom: 20px; }
+
+        button {
+            background: #3e2723; color: var(--neon-gold);
+            border: 2px solid var(--neon-gold);
+            padding: 12px 24px; font-size: 1.1rem; font-family: 'Courier New', monospace; font-weight: bold;
+            cursor: pointer; transition: 0.2s; margin: 10px;
+            box-shadow: 5px 5px 0px var(--retro-brown);
+            text-transform: uppercase;
+        }
+        button:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0px var(--retro-brown);
+            background: #4e342e;
+        }
+        button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--retro-brown);
+        }
+
+        /* --- 1. INDUSTRIAL CLICKER --- */
+        #factory-container {
+            width: 300px; height: 300px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="60" fill="%23555"/><rect x="30" y="10" width="15" height="30" fill="%23555"/></svg>') no-repeat center;
+            background-size: contain;
+            position: relative; cursor: pointer;
+            transition: transform 0.1s;
+        }
+        #factory-container:active { transform: scale(0.95); }
+        
+        .smoke {
+            position: absolute; width: 20px; height: 20px;
+            background: #888; border-radius: 50%;
+            top: 20px; left: 110px; opacity: 0;
+            pointer-events: none;
+        }
+        @keyframes rise {
+            0% { transform: translateY(0) scale(1); opacity: 0.8; }
+            100% { transform: translateY(-100px) scale(3); opacity: 0; }
+        }
+
+        /* --- 2. COMBATE NAVAL --- */
+        #naval-canvas {
+            border: 4px solid var(--neon-blue);
+            background: #001133;
+            cursor: none;
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        /* --- 3. PARLAMENTARISMO --- */
+        #congress-floor {
+            width: 500px; height: 300px;
+            border: 10px solid #8d6e63;
+            background: #d7ccc8;
+            position: relative;
+            overflow: hidden;
+            perspective: 800px;
+        }
+        .politician {
+            width: 40px; height: 60px;
+            background: black;
+            position: absolute;
+            transition: all 0.5s ease-in-out;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 20px; color: white;
+            border-radius: 5px;
+            box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
+        }
+        .chair {
+            width: 50px; height: 50px;
+            border: 2px solid brown;
+            position: absolute; bottom: 50px;
+            background: rgba(165, 42, 42, 0.3);
+        }
+
+        /* --- 4. CREADOR DE PRÓCERES --- */
+        #hero-maker {
+            display: flex; gap: 20px; align-items: center; justify-content: center;
+            background: white; padding: 20px; border-radius: 10px;
+        }
+        .hero-part {
+            width: 150px; height: 150px;
+            border: 2px dashed #333;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 4rem; cursor: pointer;
+            user-select: none; color: black;
+        }
+
+        /* --- MENSAJES FLOTANTES --- */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--neon-gold); color: black; padding: 10px 20px; border-radius: 0;
+            font-weight: bold; opacity: 0; transition: 0.5s; pointer-events: none;
+            z-index: 100; font-family: 'Courier New'; border: 2px solid black;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- HERO -->
+    <section>
+        <h1 style="color: var(--neon-gold)">LA MÁQUINA DEL TIEMPO<br><span style="font-size: 0.6em; color:white;">CHASCONA Y ESCOLAR</span></h1>
+        <h2 style="font-size: 1rem; color:var(--retro-sepia);">Historia de Chile y Universal (1° Medio)</h2>
+        <p>⚠️ Advertencia: Contiene anacronismos, sátira política y cero aburrimiento.</p>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+            <button onclick="scrollToSection('industrial')">🏭 Revolución Industrial</button>
+            <button onclick="scrollToSection('naval')">⚓ Guerra del Pacífico</button>
+            <button onclick="scrollToSection('parliament')">🎩 Parlamentarismo</button>
+            <button onclick="scrollToSection('hero-lab')">🗿 Taller de Próceres</button>
+        </div>
+    </section>
+
+    <!-- 1. REVOLUCIÓN INDUSTRIAL CLICKER -->
+    <section id="industrial">
+        <h2>🏭 Tycoon de la Revolución Industrial</h2>
+        <p>Eres un burgués del siglo XIX. Haz clic en la fábrica para quemar carbón, explotar... digo, "emplear" trabajadores y generar Progreso™.</p>
+        
+        <div id="factory-container" onclick="produceProgress(event)"></div>
+        
+        <div style="margin-top: 20px; font-size: 1.5rem;">
+            Progreso: <span id="progress-counter" style="color:var(--neon-gold)">0</span>%
+            <br>
+            <small id="pollution-text" style="font-size: 1rem; color: #888;">Cielo: Azul</small>
+        </div>
+        <p style="font-size: 0.8rem; margin-top:10px;">*Nota: Cualquier parecido con la crisis climática es pura coincidencia histórica.</p>
+    </section>
+
+    <!-- 2. GUERRA DEL PACÍFICO: COMBATE NAVAL -->
+    <section id="naval">
+        <h2>⚓ Combate Naval (Low Poly)</h2>
+        <p>Mueve el mouse para controlar el barco chileno. Haz clic para disparar cañonazos de 8-bits.</p>
+        <canvas id="naval-canvas" width="600" height="400"></canvas>
+        <div style="margin-top: 10px;">
+            <span style="color:var(--neon-blue)">Puntaje Patriótico: <span id="score">0</span></span>
+            <button onclick="resetNaval()">Reiniciar Batalla</button>
+        </div>
+    </section>
+
+    <!-- 3. PARLAMENTARISMO A LA CHILENA -->
+    <section id="parliament">
+        <h2>🎩 El Baile de las Sillas (Parlamentarismo)</h2>
+        <p>Chile, 1891-1925. Los ministros cambian, rotan y caen, pero nadie gobierna realmente. Haz clic en "Rotativa Ministerial" para causar caos.</p>
+        
+        <div id="congress-floor">
+            <!-- Sillas -->
+            <div class="chair" style="left: 50px;"></div>
+            <div class="chair" style="left: 150px;"></div>
+            <div class="chair" style="left: 250px;"></div>
+            <div class="chair" style="left: 350px;"></div>
+            <!-- Políticos -->
+            <div class="politician" id="pol1" style="left:55px; bottom:60px; background:#333;">🧔🏻</div>
+            <div class="politician" id="pol2" style="left:155px; bottom:60px; background:#555;">👴🏼</div>
+            <div class="politician" id="pol3" style="left:255px; bottom:60px; background:#777;">👨🏻‍✈️</div>
+            <div class="politician" id="pol4" style="left:355px; bottom:60px; background:#999;">🤴🏻</div>
+        </div>
+
+        <button onclick="ministerialRotation()" style="margin-top:20px; background:var(--neon-red); color:white;">🔄 ¡Rotativa Ministerial!</button>
+        <p id="parliament-msg" style="font-size:0.9rem; margin-top:10px; color:black; background:var(--retro-sepia); padding:5px;">Todo en orden... por ahora.</p>
+    </section>
+
+    <!-- 4. TALLER DE PRÓCERES -->
+    <section id="hero-lab">
+        <h2>🗿 Crea tu Propio Prócer</h2>
+        <p>La historia la escriben los vencedores... o los que tienen mejor bigote. Mezcla y combina.</p>
+        
+        <div id="hero-maker">
+            <div class="hero-part" id="head" onclick="changePart('head')">🤠</div>
+            <div class="hero-part" id="body" onclick="changePart('body')">👕</div>
+            <div class="hero-part" id="item" onclick="changePart('item')">🗡️</div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <h3 id="hero-name" style="color:var(--neon-gold)">El General Desconocido</h3>
+            <button onclick="randomizeHero()">🎲 Aleatorizar Historia</button>
+        </div>
+    </section>
+
+    <div id="toast" class="toast">¡Dato Histórico!</div>
+
+    <script>
+        // --- UTILIDADES ---
+        const playSound = (type, freq, dur=0.1) => {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.value = freq; osc.type = type;
+            gain.gain.value = 0.1; gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(); osc.stop(ctx.currentTime + dur);
+        };
+
+        function showToast(msg) {
+            const toastEl = document.getElementById('toast');
+            toastEl.innerText = msg; toastEl.style.opacity = 1; toastEl.style.bottom = '50px';
+            setTimeout(() => { toastEl.style.opacity = 0; toastEl.style.bottom = '20px'; }, 3000);
+        }
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({behavior: 'smooth'});
+        }
+
+        // --- FONDO ANIMADO: ENGRANAJES ---
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
+        let gears = [];
+
+        class Gear {
+            constructor(x, y, r, teeth, speed) {
+                this.x = x; this.y = y; this.r = r; this.teeth = teeth; this.speed = speed; this.angle = 0;
+            }
+            draw() {
+                bgCtx.save();
+                bgCtx.translate(this.x, this.y);
+                bgCtx.rotate(this.angle);
+                bgCtx.strokeStyle = '#5d4037';
+                bgCtx.lineWidth = 2;
+                bgCtx.beginPath();
+                for (let i = 0; i < this.teeth; i++) {
+                    const a = (Math.PI * 2 * i) / this.teeth;
+                    const x1 = Math.cos(a) * this.r;
+                    const y1 = Math.sin(a) * this.r;
+                    const x2 = Math.cos(a) * (this.r + 5);
+                    const y2 = Math.sin(a) * (this.r + 5);
+                    bgCtx.moveTo(x1, y1); bgCtx.lineTo(x2, y2);
+                }
+                bgCtx.stroke();
+                bgCtx.beginPath(); bgCtx.arc(0, 0, this.r, 0, Math.PI * 2); bgCtx.stroke();
+                bgCtx.restore();
+                this.angle += this.speed;
+            }
+        }
+
+        for(let i=0; i<10; i++) {
+            gears.push(new Gear(Math.random()*window.innerWidth, Math.random()*window.innerHeight, 20 + Math.random()*40, 8 + Math.floor(Math.random()*8), (Math.random()-0.5)*0.02));
+        }
+
+        function animateBg() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            gears.forEach(g => g.draw());
+            requestAnimationFrame(animateBg);
+        }
+        animateBg();
+
+        // --- 1. REVOLUCIÓN INDUSTRIAL CLICKER ---
+        let progress = 0;
+        const facts = [
+            "James Watt patenta la máquina de vapor (1769).",
+            "¡Nacen los sindicatos! Tu burguesía se asusta.",
+            "Chile exporta trigo a California y Australia.",
+            "Llega el ferrocarril Copiapó-Caldera (1851).",
+            "La Cuestión Social se pone tensa..."
+        ];
+
+        function produceProgress(e) {
+            const factory = document.getElementById('factory-container');
+            
+            // Efecto de humo
+            const smoke = document.createElement('div');
+            smoke.className = 'smoke';
+            factory.appendChild(smoke);
+            smoke.style.animation = "rise 1s forwards";
+            setTimeout(() => smoke.remove(), 1000);
+
+            // Lógica
+            progress += 1;
+            document.getElementById('progress-counter').innerText = progress;
+            playSound('square', 100 - progress/2, 0.1);
+
+            // Contaminación visual
+            const polText = document.getElementById('pollution-text');
+            if(progress > 20) polText.innerText = "Cielo: Gris Londres";
+            if(progress > 50) polText.innerText = "Cielo: Negro Carbón";
+            if(progress > 80) polText.innerText = "Cielo: Apocalíptico";
+            
+            // Datos curiosos aleatorios
+            if(progress % 10 === 0) {
+                showToast(facts[Math.floor(Math.random()*facts.length)]);
+            }
+        }
+
+        // --- 2. GUERRA DEL PACÍFICO: NAVAL ---
+        const navCanvas = document.getElementById('naval-canvas');
+        const navCtx = navCanvas.getContext('2d');
+        let shipX = 300;
+        let bullets = [];
+        let enemies = [];
+        let score = 0;
+        let gameActive = true;
+
+        // Bucle del juego
+        function navalLoop() {
+            if(!gameActive) return;
+            navCtx.fillStyle = '#001133';
+            navCtx.fillRect(0, 0, 600, 400);
+
+            // Dibujar Mar
+            navCtx.fillStyle = '#002255';
+            navCtx.fillRect(0, 350, 600, 50);
+
+            // Dibujar Barco Chileno (Esmeralda)
+            navCtx.fillStyle = '#8B4513'; // Madera
+            navCtx.fillRect(shipX - 20, 330, 40, 20); // Casco
+            navCtx.fillStyle = 'white';
+            navCtx.fillRect(shipX - 5, 310, 10, 20); // Vela
+            navCtx.fillStyle = 'red'; // Bandera (simple)
+            navCtx.fillRect(shipX, 310, 10, 5);
+
+            // Balas
+            navCtx.fillStyle = 'yellow';
+            bullets.forEach((b, i) => {
+                b.y -= 5;
+                navCtx.fillRect(b.x, b.y, 4, 4);
+                if(b.y < 0) bullets.splice(i, 1);
+            });
+
+            // Enemigos (Huáscar)
+            if(Math.random() < 0.02) {
+                enemies.push({x: Math.random() * 560 + 20, y: 0});
+            }
+
+            navCtx.fillStyle = '#333'; // Hierro
+            enemies.forEach((e, i) => {
+                e.y += 2;
+                // Dibujar nave enemiga
+                navCtx.beginPath();
+                navCtx.moveTo(e.x, e.y);
+                navCtx.lineTo(e.x - 15, e.y - 10);
+                navCtx.lineTo(e.x + 15, e.y - 10);
+                navCtx.fill();
+
+                // Colisiones
+                bullets.forEach((b, bi) => {
+                    if(b.x > e.x - 15 && b.x < e.x + 15 && b.y < e.y && b.y > e.y - 15) {
+                        enemies.splice(i, 1);
+                        bullets.splice(bi, 1);
+                        score += 100;
+                        document.getElementById('score').innerText = score;
+                        playSound('noise', 500, 0.1);
+                    }
+                });
+
+                if(e.y > 400) {
+                    enemies.splice(i, 1); // Se escapó
+                    score -= 50;
+                    document.getElementById('score').innerText = score;
+                }
+            });
+
+            requestAnimationFrame(navalLoop);
+        }
+        navalLoop();
+
+        // Controles Naval
+        navCanvas.addEventListener('mousemove', (e) => {
+            const rect = navCanvas.getBoundingClientRect();
+            shipX = e.clientX - rect.left;
+        });
+        navCanvas.addEventListener('mousedown', () => {
+            bullets.push({x: shipX, y: 330});
+            playSound('sawtooth', 200, 0.1);
+        });
+        function resetNaval() {
+            enemies = []; bullets = []; score = 0;
+            document.getElementById('score').innerText = 0;
+        }
+
+        // --- 3. PARLAMENTARISMO ---
+        const msgs = [
+            "¡Voto de censura! Cae el gabinete.",
+            "El Presidente no puede hacer nada...",
+            "Se aprueba una ley... para discutir otra ley.",
+            "¡Ruido de Sables! (Ups, eso es 1924).",
+            "La Cuestión Social espera..."
+        ];
+        
+        function ministerialRotation() {
+            const floor = document.getElementById('congress-floor');
+            const pols = document.querySelectorAll('.politician');
+            
+            // Caos aleatorio
+            pols.forEach(p => {
+                const randX = Math.random() * 400 + 20;
+                const randY = Math.random() * 100 + 20;
+                const randRot = (Math.random() - 0.5) * 360;
+                
+                p.style.left = randX + 'px';
+                p.style.bottom = randY + 'px';
+                p.style.transform = `rotate(${randRot}deg)`;
+            });
+
+            playSound('triangle', 300, 0.5); // Sonido cómico
+
+            // Mensaje
+            const txt = document.getElementById('parliament-msg');
+            txt.innerText = msgs[Math.floor(Math.random() * msgs.length)];
+            
+            // Resetear después de un momento
+            setTimeout(() => {
+                pols.forEach((p, i) => {
+                    p.style.left = (55 + i*100) + 'px';
+                    p.style.bottom = '60px';
+                    p.style.transform = 'rotate(0deg)';
+                });
+            }, 1000);
+        }
+
+        // --- 4. CREADOR DE PRÓCERES ---
+        const parts = {
+            head: ['🤠', '💂', '🤴', '👴', '👱'],
+            body: ['👕', '👗', '🧥', '🥋', '🦺'],
+            item: ['🗡️', '📜', '🍺', '🥖', '🇨🇱']
+        };
+        const names = ["O'Higgins", "Carrera", "Portales", "Balmaceda", "Arturo Prat", "Manuel Rodríguez"];
+        const titles = ["El Supremo", "El Rebelde", "El Conservador", "El Liberal", "El Héroe"];
+
+        function changePart(type) {
+            const el = document.getElementById(type);
+            const arr = parts[type];
+            // Buscar índice actual y rotar
+            let curr = arr.indexOf(el.innerText);
+            if(curr === -1) curr = 0;
+            el.innerText = arr[(curr + 1) % arr.length];
+            playSound('sine', 400, 0.05);
+        }
+
+        function randomizeHero() {
+            ['head', 'body', 'item'].forEach(t => {
+                const arr = parts[t];
+                document.getElementById(t).innerText = arr[Math.floor(Math.random()*arr.length)];
+            });
+            const name = names[Math.floor(Math.random()*names.length)];
+            const title = titles[Math.floor(Math.random()*titles.length)];
+            document.getElementById('hero-name').innerText = `${name} ${title}`;
+            showToast("¡Ha nacido un nuevo Padre de la Patria!");
+        }
+
+        // Ajustar canvas al resize
+        window.addEventListener('resize', () => {
+            bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
+        });
+
+    </script>
+</body>
+</html>

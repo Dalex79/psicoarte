@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS - Portal Educativo Psicodélico</title>
+    <style>
+        :root {
+            --neon-purple: #b026ff;
+            --neon-blue: #00ffff;
+            --neon-green: #39ff14;
+            --neon-pink: #ff0099;
+            --neon-yellow: #fff01f;
+            --bg-deep: #050510;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-deep);
+            color: white;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* --- FONDO ANIMADO --- */
+        #portal-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; opacity: 0.4;
+        }
+
+        /* --- HEADER --- */
+        header {
+            margin-top: 50px;
+            text-align: center;
+            z-index: 10;
+            animation: float 4s infinite ease-in-out;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin: 0;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple), var(--neon-pink));
+            -webkit-background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            filter: drop-shadow(0 0 10px var(--neon-purple));
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            color: #ccc;
+            margin-top: 10px;
+            letter-spacing: 2px;
+        }
+
+        /* --- GRID DE DIMENSIONES --- */
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            width: 90%;
+            max-width: 1200px;
+            margin: 50px 0;
+            padding-bottom: 50px;
+            z-index: 10;
+        }
+
+        .dimension-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .dimension-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 0 30px var(--card-color);
+            border-color: var(--card-color);
+        }
+
+        .card-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+        .dimension-card:hover .card-icon {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            color: var(--card-color);
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: #aaa;
+            line-height: 1.4;
+        }
+
+        /* Colores específicos por tarjeta */
+        .music { --card-color: var(--neon-green); }
+        .art { --card-color: var(--neon-pink); }
+        .science { --card-color: var(--neon-blue); }
+        .history { --card-color: var(--neon-yellow); }
+        .english { --card-color: var(--neon-purple); }
+        .acid { --card-color: white; }
+
+        /* --- FOOTER --- */
+        footer {
+            margin-top: auto;
+            padding: 20px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="portal-canvas"></canvas>
+
+    <header>
+        <h1>NEXUS</h1>
+        <p class="subtitle">SELECCIONA TU DIMENSIÓN DE APRENDIZAJE</p>
+    </header>
+
+    <div class="portal-grid">
+        
+        <!-- MÚSICA -->
+        <a href="mega_studio.html" class="dimension-card music">
+            <div class="card-icon">🎛️</div>
+            <div class="card-title">Mega Estudio Sónico</div>
+            <div class="card-desc">15 Simuladores de física sonora, sintetizadores y ritmo. Experimenta el sonido visualmente.</div>
+        </a>
+
+        <!-- ARTE -->
+        <a href="arte_delirio.html" class="dimension-card art">
+            <div class="card-icon">🎨</div>
+            <div class="card-title">Galería del Delirio</div>
+            <div class="card-desc">Pinta como Pollock, deforma como Dalí y juega con ilusiones ópticas.</div>
+        </a>
+
+        <!-- CIENCIAS -->
+        <a href="ciencia_psicodelica.html" class="dimension-card science">
+            <div class="card-icon">🧬</div>
+            <div class="card-title">Laboratorio Loco</div>
+            <div class="card-desc">Biología celular, química nuclear explosiva y física de partículas en tu navegador.</div>
+        </a>
+
+        <!-- HISTORIA -->
+        <a href="historia_interactiva.html" class="dimension-card history">
+            <div class="card-icon">🏛️</div>
+            <div class="card-title">Máquina del Tiempo</div>
+            <div class="card-desc">Revolución Industrial, Guerra del Pacífico y política chilena con humor.</div>
+        </a>
+
+        <!-- INGLÉS -->
+        <a href="english_arcade.html" class="dimension-card english">
+            <div class="card-icon">👾</div>
+            <div class="card-title">Neon English Arcade</div>
+            <div class="card-desc">Aprende gramática y vocabulario jugando en un arcade retro-futurista.</div>
+        </a>
+
+        <!-- VIAJE ORIGINAL -->
+        <a href="viaje_acido.html" class="dimension-card acid">
+            <div class="card-icon">🌀</div>
+            <div class="card-title">El Origen (Viaje Ácido)</div>
+            <div class="card-desc">La experiencia visual y filosófica original. Solo para mentes abiertas.</div>
+        </a>
+
+    </div>
+
+    <footer>
+        Sistema Operativo Educativo v1.0 | Creado por IA & Humano
+    </footer>
+
+    <script>
+        // --- FONDO DE VÓRTICE ---
+        const canvas = document.getElementById('portal-canvas');
+        const ctx = canvas.getContext('2d');
+        let portalW, portalH;
+        let particles = [];
+
+        function resize() {
+            portalW = canvas.width = window.innerWidth;
+            portalH = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Star {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = (Math.random() - 0.5) * portalW * 2;
+                this.y = (Math.random() - 0.5) * portalH * 2;
+                this.z = Math.random() * portalW;
+                this.pz = this.z;
+                this.color = `hsl(${Math.random()*360}, 100%, 70%)`;
+            }
+            update() {
+                this.z -= 10; // Velocidad hacia el espectador
+                if (this.z < 1) {
+                    this.reset();
+                    this.z = portalW;
+                    this.pz = this.z;
+                }
+            }
+            draw() {
+                const sx = (this.x / this.z) * portalW/2 + portalW/2;
+                const sy = (this.y / this.z) * portalH/2 + portalH/2;
+                
+                const r = (1 - this.z / portalW) * 4; // Tamaño según cercanía
+
+                // Estela (efecto velocidad luz)
+                const px = (this.x / this.pz) * portalW/2 + portalW/2;
+                const py = (this.y / this.pz) * portalH/2 + portalH/2;
+
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = r;
+                ctx.beginPath();
+                ctx.moveTo(px, py);
+                ctx.lineTo(sx, sy);
+                ctx.stroke();
+
+                this.pz = this.z;
+            }
+        }
+
+        for(let i=0; i<400; i++) particles.push(new Star());
+
+        function animate() {
+            ctx.fillStyle = 'rgba(5, 5, 16, 0.4)'; // Trail negro
+            ctx.fillRect(0, 0, portalW, portalH);
+            
+            // Efecto rotación leve
+            ctx.save();
+            // ctx.translate(w/2, h/2);
+            // ctx.rotate(0.001); // Opcional: rotar todo el campo
+            // ctx.translate(-w/2, -h/2);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            ctx.restore();
+            
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+    </script>
+</body>
+</html>

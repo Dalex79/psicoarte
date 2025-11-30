@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galería del Delirio - Arte Interactivo</title>
+    <style>
+        :root {
+            --surreal-purple: #6a0dad;
+            --cubist-orange: #ff8c00;
+            --pop-pink: #ff007f;
+            --mondrian-red: #ff0000;
+            --mondrian-blue: #0000ff;
+            --mondrian-yellow: #ffff00;
+            --bg-gallery: #111;
+        }
+
+        * { box-sizing: border-box; user-select: none; }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-gallery);
+            color: #eee;
+            font-family: 'Verdana', sans-serif;
+            text-align: center;
+            overflow-x: hidden;
+        }
+
+        /* --- UI GENERAL --- */
+        h1 {
+            font-size: 3.5rem; margin: 20px 0;
+            background: linear-gradient(90deg, var(--pop-pink), var(--cubist-orange), var(--surreal-purple));
+            -webkit-background-clip: text; color: transparent;
+            font-family: 'Courier New', monospace; letter-spacing: -2px;
+            animation: wiggly 3s infinite;
+        }
+
+        h2 { font-size: 1.8rem; color: #fff; border-bottom: 2px dashed #555; display: inline-block; margin-bottom: 10px; }
+        p { color: #aaa; margin-bottom: 15px; font-style: italic; }
+
+        section {
+            padding: 30px; margin: 20px auto;
+            max-width: 900px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border: 1px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            background: #fff; cursor: crosshair;
+            box-shadow: 5px 5px 0px #333;
+            touch-action: none; /* Para móviles */
+        }
+
+        button {
+            padding: 10px 20px; font-size: 1rem; cursor: pointer;
+            background: #333; color: white; border: 2px solid white;
+            transition: 0.2s; font-family: monospace; text-transform: uppercase;
+            margin: 5px;
+        }
+        button:hover { background: white; color: black; transform: scale(1.05); }
+
+        /* --- MONDRIAN STYLE --- */
+        .mondrian-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            width: 300px; height: 300px; margin: 0 auto;
+            background: black; gap: 5px; border: 5px solid black;
+        }
+        .m-cell { background: white; cursor: pointer; transition: 0.2s; }
+        
+        /* --- ANIMACIONES --- */
+        @keyframes wiggly { 0% { transform: rotate(0deg); } 25% { transform: rotate(1deg); } 75% { transform: rotate(-1deg); } 100% { transform: rotate(0deg); } }
+        
+        /* --- TOAST CRITIC --- */
+        #critic-bubble {
+            position: fixed; bottom: 20px; right: 20px; width: 300px;
+            background: white; color: black; padding: 15px;
+            border: 4px solid black; font-family: 'Times New Roman', serif;
+            display: none; z-index: 1000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5);
+        }
+        #critic-face { font-size: 3rem; float: left; margin-right: 10px; }
+        
+        /* --- NAV --- */
+        nav { position: sticky; top: 0; background: #000; z-index: 100; padding: 10px; border-bottom: 2px solid var(--pop-pink); }
+        .nav-btn { font-size: 0.8rem; padding: 5px 10px; }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <button class="nav-btn" onclick="location.href='#pollock'">Pollock</button>
+        <button class="nav-btn" onclick="location.href='#picasso'">Picasso</button>
+        <button class="nav-btn" onclick="location.href='#klee'">Klee</button>
+        <button class="nav-btn" onclick="location.href='#dali'">Dalí</button>
+        <button class="nav-btn" onclick="location.href='#mondrian'">Mondrian</button>
+        <button class="nav-btn" onclick="location.href='#more'">Más...</button>
+    </nav>
+
+    <h1>GALERÍA DEL DELIRIO</h1>
+    <p>"El arte es lo que dejas salir cuando nadie mira."</p>
+
+    <!-- 1. POLLOCK -->
+    <section id="pollock">
+        <h2>1. El Cuarto de la Ira (Pollock)</h2>
+        <p>Mueve el mouse rápido. ¡Más rápido! Mancha el lienzo con furia existencial.</p>
+        <canvas id="c-pollock" width="600" height="300"></canvas>
+        <br>
+        <button onclick="clearCanvas('c-pollock')">Limpiar Desastre</button>
+    </section>
+
+    <!-- 2. PICASSO -->
+    <section id="picasso">
+        <h2>2. El Constructor Cubista</h2>
+        <p>Haz clic en el lienzo para añadir ojos, narices y bocas generadas matemáticamente. ¡Cada rasgo es único!</p>
+        <canvas id="c-picasso" width="600" height="400" style="background:#f4e4bc; cursor: pointer;"></canvas>
+        <br>
+        <div style="margin-top: 10px;">
+            <button onclick="picassoFeature='eye'">👁️ Ojo</button>
+            <button onclick="picassoFeature='nose'">👃 Nariz</button>
+            <button onclick="picassoFeature='mouth'">👄 Boca</button>
+            <button onclick="picassoFeature='shape'">🔷 Forma Rara</button>
+            <button onclick="resetPicasso()" style="border-color: var(--cubist-orange); color: var(--cubist-orange);">♻️ Nuevo Lienzo</button>
+        </div>
+    </section>
+
+    <!-- 3. KLEE -->
+    <section id="klee">
+        <h2>3. El Jardín de Paul Klee</h2>
+        <p>Arrastra el mouse para cultivar símbolos y geometría poética.</p>
+        <canvas id="c-klee" width="600" height="300" style="background:#222;"></canvas>
+        <br>
+        <button onclick="clearCanvas('c-klee')">Podar Jardín</button>
+    </section>
+
+    <!-- 4. DALI -->
+    <section id="dali">
+        <h2>4. Persistencia de la Memoria (Derretir)</h2>
+        <p>Dibuja líneas y observa cómo la gravedad hace su trabajo surrealista.</p>
+        <canvas id="c-dali" width="600" height="300"></canvas>
+        <br>
+        <button onclick="clearDali()">Solidificar</button>
+    </section>
+
+    <!-- 5. MONDRIAN -->
+    <section id="mondrian">
+        <h2>5. Neoplasticismo Clicker</h2>
+        <p>Haz clic en los cuadros para cambiar entre Rojo, Azul, Amarillo y Negro.</p>
+        <div id="m-grid" class="mondrian-grid">
+            <!-- JS fills this -->
+        </div>
+        <button onclick="resetMondrian()" style="margin-top:10px;">Resetear Grilla</button>
+    </section>
+
+    <!-- 6. SEURAT -->
+    <section id="more">
+        <h2>6. Ametralladora Puntillista</h2>
+        <p>Mantén presionado el clic para disparar miles de puntos de color.</p>
+        <canvas id="c-seurat" width="600" height="300"></canvas>
+    </section>
+
+    <!-- 7. WARHOL -->
+    <section>
+        <h2>7. Fábrica Pop Art</h2>
+        <p>Haz clic para estampar Bananas o Latas de Sopa con colores tóxicos.</p>
+        <canvas id="c-warhol" width="600" height="300" style="background:#fff;"></canvas>
+        <div style="margin-top:5px;">
+            <button onclick="warholMode='soup'">🥫 Sopa</button>
+            <button onclick="warholMode='banana'">🍌 Banana</button>
+            <button onclick="warholMode='marilyn'">👩 Marilyn</button>
+        </div>
+    </section>
+
+    <!-- 8. KALEIDOSCOPIO -->
+    <section>
+        <h2>8. Mandala Psicodélico</h2>
+        <p>Dibuja en un sector, el universo lo repite por ti.</p>
+        <canvas id="c-kaleido" width="400" height="400" style="border-radius:50%; background:#000;"></canvas>
+        <!-- Cambiado onclick para usar función específica -->
+        <br><button onclick="clearKaleido()">Limpiar Mente</button>
+    </section>
+
+    <!-- 9. OP ART -->
+    <section>
+        <h2>9. Hipnosis Óptica</h2>
+        <p>Mueve el mouse para alterar la realidad visual.</p>
+        <!-- Fondo negro explícito para contraste con líneas blancas -->
+        <canvas id="c-opart" width="600" height="300" style="background:#000;"></canvas>
+    </section>
+
+    <!-- 10. EL CRÍTICO -->
+    <div style="padding: 50px; background: white; color: black; margin-top: 50px;">
+        <h2>10. El Crítico Snob</h2>
+        <p>¿Terminaste tu obra maestra? Deja que "Jean-Pierre", el crítico, la juzgue.</p>
+        <button onclick="judgeArt()" style="font-size: 1.5rem; padding: 20px; background: black; color: white;">🧐 JUZGAR MI ARTE</button>
+    </div>
+
+    <!-- CRITIC BUBBLE -->
+    <div id="critic-bubble">
+        <div id="critic-face">🧐</div>
+        <div id="critic-text">"Mmm... derivativo."</div>
+    </div>
+
+    <script>
+        // --- MOTOR DE AUDIO ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type='sine', dur=0.1) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.value = freq; osc.type = type;
+            gain.gain.value = 0.1; gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + dur);
+        }
+        function playNoise() {
+            // Ruido blanco simple para "splats"
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const bufferSize = audioCtx.sampleRate * 0.1; // 0.1s
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const gain = audioCtx.createGain();
+            gain.gain.value = 0.05;
+            noise.connect(gain); gain.connect(audioCtx.destination);
+            noise.start();
+        }
+
+        // --- UTILIDADES ---
+        function getPos(canvas, e) {
+            const r = canvas.getBoundingClientRect();
+            // Soporte touch y mouse
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: cx - r.left, y: cy - r.top };
+        }
+        function randColor() { return `hsl(${Math.random()*360}, 100%, 50%)`; }
+        function clearCanvas(id) { 
+            const c = document.getElementById(id); 
+            c.getContext('2d').clearRect(0,0,c.width,c.height); 
+            playTone(100, 'sawtooth', 0.5);
+        }
+
+        // 1. POLLOCK
+        const cPollock = document.getElementById('c-pollock');
+        const ctxPollock = cPollock.getContext('2d');
+        let lastX=0, lastY=0;
+        
+        cPollock.addEventListener('mousemove', e => {
+            const {x, y} = getPos(cPollock, e);
+            const dist = Math.hypot(x-lastX, y-lastY);
+            if(dist > 50) { // Solo si se mueve rápido
+                const splats = Math.floor(Math.random()*5)+1;
+                for(let i=0; i<splats; i++) {
+                    ctxPollock.beginPath();
+                    ctxPollock.fillStyle = randColor();
+                    const r = Math.random()*10 + (dist/10); // Más rápido = más grande
+                    const rx = x + (Math.random()-0.5)*50;
+                    const ry = y + (Math.random()-0.5)*50;
+                    ctxPollock.arc(rx, ry, r, 0, Math.PI*2);
+                    ctxPollock.fill();
+                }
+                if(Math.random()>0.5) playNoise();
+            }
+            lastX=x; lastY=y;
+        });
+
+        // 2. PICASSO (MEJORADO)
+        const cPicasso = document.getElementById('c-picasso');
+        const ctxPicasso = cPicasso.getContext('2d');
+        let picassoFeature = 'eye'; // Default
+        
+        function drawCubistPath(ctx, x, y, type) {
+            ctx.save();
+            ctx.translate(x, y);
+            const scale = Math.random() * 0.8 + 0.5;
+            ctx.scale(scale, scale);
+            const rot = (Math.random() - 0.5) * 1; // Rotación ligera
+            ctx.rotate(rot);
+
+            ctx.lineWidth = Math.random() * 3 + 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#111';
+            ctx.fillStyle = randColor();
+
+            ctx.beginPath();
+            
+            if (type === 'eye') {
+                // Ojo almendrado deforme
+                const w = 40 + Math.random()*20;
+                const h = 20 + Math.random()*10;
+                ctx.moveTo(-w, 0);
+                ctx.quadraticCurveTo(0, -h*1.5, w, 0);
+                ctx.quadraticCurveTo(0, h*1.5, -w, 0);
+                ctx.stroke();
+                // Pupila loca
+                ctx.beginPath();
+                ctx.arc((Math.random()-0.5)*10, (Math.random()-0.5)*5, 8, 0, Math.PI*2);
+                ctx.fill();
+                ctx.stroke();
+            } else if (type === 'nose') {
+                // Nariz angular
+                ctx.moveTo(0, -40);
+                ctx.lineTo(-20, 40);
+                ctx.lineTo(20, 30);
+                ctx.stroke();
+            } else if (type === 'mouth') {
+                // Boca torcida
+                ctx.moveTo(-30, 10);
+                ctx.lineTo(0, -10);
+                ctx.lineTo(30, 10);
+                ctx.stroke();
+                // Labios
+                ctx.beginPath();
+                ctx.fillStyle = `hsl(${Math.random()*50 + 330}, 80%, 60%)`; // Rojizos
+                ctx.ellipse(0, 0, 30, 15, 0.2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.stroke();
+            } else {
+                // Forma rara de relleno
+                ctx.beginPath();
+                ctx.moveTo(0,0);
+                ctx.lineTo(Math.random()*100-50, Math.random()*100-50);
+                ctx.lineTo(Math.random()*100-50, Math.random()*100-50);
+                ctx.closePath();
+                ctx.globalAlpha = 0.5;
+                ctx.fill();
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+
+        cPicasso.addEventListener('mousedown', e => {
+            const {x, y} = getPos(cPicasso, e);
+            drawCubistPath(ctxPicasso, x, y, picassoFeature);
+            playTone(150 + Math.random()*300, 'square', 0.1);
+        });
+
+        function resetPicasso() {
+            ctxPicasso.clearRect(0,0,600,400);
+            // Fondo base cara abstracta
+            ctxPicasso.save();
+            ctxPicasso.translate(300, 200);
+            ctxPicasso.beginPath();
+            ctxPicasso.fillStyle = '#eec';
+            ctxPicasso.moveTo(-100, -150);
+            ctxPicasso.lineTo(120, -120);
+            ctxPicasso.lineTo(80, 150);
+            ctxPicasso.lineTo(-90, 130);
+            ctxPicasso.closePath();
+            ctxPicasso.fill();
+            ctxPicasso.stroke();
+            // Linea divisoria perfil
+            ctxPicasso.beginPath();
+            ctxPicasso.moveTo(0, -150);
+            ctxPicasso.quadraticCurveTo(50, 0, -20, 150);
+            ctxPicasso.stroke();
+            ctxPicasso.restore();
+        }
+        resetPicasso(); // Iniciar con una cara base
+
+        // 3. KLEE
+        const cKlee = document.getElementById('c-klee');
+        const ctxKlee = cKlee.getContext('2d');
+        let kleePainting = false;
+        cKlee.addEventListener('mousedown', ()=>kleePainting=true);
+        window.addEventListener('mouseup', ()=>kleePainting=false);
+        cKlee.addEventListener('mousemove', e => {
+            if(!kleePainting) return;
+            const {x, y} = getPos(cKlee, e);
+            if(Math.random()>0.8) {
+                const s = Math.random()*20+5;
+                ctxKlee.fillStyle = `hsla(${Math.random()*360}, 70%, 60%, 0.8)`;
+                if(Math.random()>0.5) ctxKlee.fillRect(x,y,s,s);
+                else {
+                    ctxKlee.beginPath(); ctxKlee.arc(x,y,s/2,0,Math.PI*2); ctxKlee.fill();
+                }
+                // Símbolo rúnico
+                ctxKlee.fillStyle = 'white';
+                ctxKlee.font = '10px monospace';
+                const glyphs = ['+', '-', 'o', '^', '#'];
+                ctxKlee.fillText(glyphs[Math.floor(Math.random()*glyphs.length)], x, y);
+                playTone(600 + y, 'sine', 0.05);
+            }
+        });
+
+        // 4. DALI (Melting)
+        const cDali = document.getElementById('c-dali');
+        const ctxDali = cDali.getContext('2d');
+        let daliPoints = [];
+        let daliPaint = false;
+        
+        cDali.addEventListener('mousedown', ()=>daliPaint=true);
+        window.addEventListener('mouseup', ()=>daliPaint=false);
+        cDali.addEventListener('mousemove', e => {
+            if(!daliPaint) return;
+            const {x, y} = getPos(cDali, e);
+            // Añadir puntos de pintura
+            for(let i=0; i<3; i++) {
+                daliPoints.push({
+                    x: x + (Math.random()-0.5)*10,
+                    y: y + (Math.random()-0.5)*10,
+                    vx: 0,
+                    vy: Math.random()*0.5 + 0.1, // Gravedad lenta
+                    color: randColor(),
+                    size: Math.random()*5+2
+                });
+            }
+        });
+        
+        function loopDali() {
+            ctxDali.clearRect(0,0,600,300);
+            for(let p of daliPoints) {
+                p.y += p.vy;
+                if(p.y > 300) p.y = 300; // Piso
+                ctxDali.fillStyle = p.color;
+                ctxDali.beginPath(); ctxDali.arc(p.x, p.y, p.size, 0, Math.PI*2); ctxDali.fill();
+            }
+            requestAnimationFrame(loopDali);
+        }
+        loopDali();
+        function clearDali() { daliPoints = []; playTone(100,'triangle',0.5); }
+
+        // 5. MONDRIAN
+        const mGrid = document.getElementById('m-grid');
+        const mColors = ['white', 'red', 'blue', 'yellow', 'black'];
+        
+        for(let i=0; i<16; i++) {
+            let d = document.createElement('div');
+            d.className = 'm-cell';
+            d.dataset.cIndex = 0;
+            d.onclick = () => {
+                let idx = parseInt(d.dataset.cIndex);
+                idx = (idx + 1) % mColors.length;
+                d.dataset.cIndex = idx;
+                d.style.backgroundColor = mColors[idx];
+                playTone(200 + idx*100, 'square', 0.1);
+            };
+            mGrid.appendChild(d);
+        }
+        function resetMondrian() {
+            document.querySelectorAll('.m-cell').forEach(c => {
+                c.style.backgroundColor = 'white'; c.dataset.cIndex = 0;
+            });
+        }
+
+        // 6. SEURAT (Puntillismo)
+        const cSeurat = document.getElementById('c-seurat');
+        const ctxSeurat = cSeurat.getContext('2d');
+        let sPaint = false;
+        cSeurat.addEventListener('mousedown', ()=>sPaint=true);
+        window.addEventListener('mouseup', ()=>sPaint=false);
+        
+        // Loop rápido para "ametralladora"
+        setInterval(() => {
+            if(!sPaint) return;
+            // Usamos la última posición del mouse (global trick or just random area logic if mouse is stored)
+            // Simplificación: usaremos evento move para updatear pos
+        }, 10);
+        
+        cSeurat.addEventListener('mousemove', e => {
+            if(!sPaint) return;
+            const {x, y} = getPos(cSeurat, e);
+            for(let i=0; i<5; i++) { // 5 puntos por evento
+                const ox = (Math.random()-0.5)*30;
+                const oy = (Math.random()-0.5)*30;
+                ctxSeurat.fillStyle = randColor();
+                ctxSeurat.fillRect(x+ox, y+oy, 2, 2);
+            }
+            if(Math.random()>0.8) playTone(800, 'sawtooth', 0.02);
+        });
+
+        // 7. WARHOL
+        const cWarhol = document.getElementById('c-warhol');
+        const ctxWarhol = cWarhol.getContext('2d');
+        let warholMode = 'soup';
+        const icons = {
+            'soup': '🥫', 'banana': '🍌', 'marilyn': '👩'
+        };
+        
+        cWarhol.addEventListener('mousedown', e => {
+            const {x, y} = getPos(cWarhol, e);
+            const icon = icons[warholMode];
+            const cols = ['#ff00ff', '#ffff00', '#00ffff', '#39ff14'];
+            
+            // Dibujar fondo cuadrado
+            ctxWarhol.fillStyle = cols[Math.floor(Math.random()*cols.length)];
+            ctxWarhol.fillRect(x-25, y-25, 50, 50);
+            
+            // Icono
+            ctxWarhol.font = "30px Arial";
+            ctxWarhol.filter = `hue-rotate(${Math.random()*360}deg)`; // Filtro pop art
+            ctxWarhol.fillText(icon, x-15, y+10);
+            ctxWarhol.filter = 'none';
+            playTone(400, 'square', 0.1);
+        });
+
+        // 8. KALEIDOSCOPE
+        const cKal = document.getElementById('c-kaleido');
+        const ctxKal = cKal.getContext('2d');
+        let kPaint = false;
+        let lastKx=0, lastKy=0;
+        
+        ctxKal.translate(200, 200); // Centrar
+        
+        cKal.addEventListener('mousedown', e => {
+            kPaint=true;
+            const {x, y} = getPos(cKal, e);
+            lastKx = x - 200; lastKy = y - 200;
+        });
+        window.addEventListener('mouseup', ()=>kPaint=false);
+        
+        cKal.addEventListener('mousemove', e => {
+            if(!kPaint) return;
+            const {x, y} = getPos(cKal, e);
+            const mx = x - 200; const my = y - 200;
+            
+            const hue = (Date.now()/10)%360;
+            ctxKal.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+            ctxKal.lineWidth = 2;
+            
+            for(let i=0; i<8; i++) {
+                ctxKal.save();
+                ctxKal.rotate((Math.PI*2/8)*i);
+                ctxKal.beginPath();
+                ctxKal.moveTo(lastKx, lastKy);
+                ctxKal.lineTo(mx, my);
+                ctxKal.stroke();
+                // Mirror
+                ctxKal.scale(1, -1);
+                ctxKal.beginPath();
+                ctxKal.moveTo(lastKx, lastKy);
+                ctxKal.lineTo(mx, my);
+                ctxKal.stroke();
+                ctxKal.restore();
+            }
+            
+            lastKx = mx; lastKy = my;
+            playTone(300 + (hue), 'sine', 0.05);
+        });
+
+        // Corrección: Función específica para limpiar con contexto trasladado
+        function clearKaleido() {
+            // El contexto está trasladado (200,200), así que limpiamos desde -200,-200
+            ctxKal.clearRect(-200, -200, 400, 400);
+            playTone(100, 'sawtooth', 0.5);
+        }
+
+        // 9. OP ART
+        const cOp = document.getElementById('c-opart');
+        const ctxOp = cOp.getContext('2d');
+        
+        cOp.addEventListener('mousemove', e => {
+            const {x, y} = getPos(cOp, e);
+            ctxOp.clearRect(0,0,600,300);
+            
+            ctxOp.strokeStyle = 'white';
+            ctxOp.lineWidth = 1;
+            
+            // Dibujar círculos concéntricos desplazados
+            for(let i=0; i<50; i++) {
+                ctxOp.beginPath();
+                // El centro se mueve ligeramente opuesto al mouse para efecto parallax
+                const cx = 300 + (x-300) * (i/50) * 0.5;
+                const cy = 150 + (y-150) * (i/50) * 0.5;
+                ctxOp.arc(cx, cy, i*10, 0, Math.PI*2);
+                ctxOp.stroke();
+            }
+            
+            // Cuadricula inversa (Color corregido para que JS lo entienda)
+            ctxOp.strokeStyle = '#ff007f'; // Color pop-pink directo
+            for(let i=0; i<600; i+=20) {
+                ctxOp.beginPath();
+                ctxOp.moveTo(i, 0); ctxOp.lineTo(x, y);
+                ctxOp.stroke();
+            }
+        });
+
+        // 10. CRITIC
+        const phrases = [
+            "Mmm... un poco derivativo, ¿no?",
+            "¡Sublime! Representa la angustia del hombre moderno.",
+            "Mi gato pinta mejor, y es ciego.",
+            "Demasiado 'mainstream' para mi gusto.",
+            "Noto una influencia post-estructuralista interesante.",
+            "¡Es una ofensa a la retina! Me encanta.",
+            "Véndelo como NFT, rápido.",
+            "Le falta más azul.",
+            "Una composición audaz, pero carente de alma."
+        ];
+        
+        function judgeArt() {
+            const bubble = document.getElementById('critic-bubble');
+            const text = document.getElementById('critic-text');
+            const face = document.getElementById('critic-face');
+            
+            bubble.style.display = 'block';
+            text.innerText = phrases[Math.floor(Math.random()*phrases.length)];
+            face.innerText = ['🧐','😒','🤮','😍','🤔'][Math.floor(Math.random()*5)];
+            
+            playTone(150, 'square', 0.3);
+            
+            setTimeout(() => {
+                bubble.style.display = 'none';
+            }, 4000);
+        }
+
+    </script>
+</body>
+
+</html>  

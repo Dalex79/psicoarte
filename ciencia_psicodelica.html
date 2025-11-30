@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciencia Psicodélica - El Laboratorio Loco</title>
+    <style>
+        :root {
+            --neon-green: #39ff14;
+            --neon-purple: #b026ff;
+            --neon-blue: #00ffff;
+            --neon-yellow: #fff01f;
+            --neon-pink: #ff0099;
+            --toxic-bg: #0a0a12;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--toxic-bg);
+            color: white;
+            font-family: 'Consolas', 'Courier New', monospace;
+            overflow-x: hidden;
+            text-align: center;
+        }
+
+        /* --- FONDO ANIMADO (ADN CÓSMICO) --- */
+        #bg-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; opacity: 0.3; pointer-events: none;
+        }
+
+        /* --- ESTILOS GENERALES --- */
+        section {
+            min-height: 90vh;
+            padding: 40px 20px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border-bottom: 2px dashed rgba(255,255,255,0.1);
+            position: relative;
+        }
+
+        h1 {
+            font-size: 4rem; margin-bottom: 0;
+            text-shadow: 4px 4px 0 var(--neon-purple);
+            animation: float 3s infinite ease-in-out;
+        }
+        
+        h2 {
+            font-size: 2.5rem; color: var(--neon-blue);
+            text-transform: uppercase; letter-spacing: 4px;
+            margin-bottom: 20px;
+        }
+
+        p { font-size: 1.2rem; max-width: 600px; line-height: 1.5; color: #ddd; }
+
+        button {
+            background: transparent; color: var(--neon-green);
+            border: 2px solid var(--neon-green);
+            padding: 12px 24px; font-size: 1.1rem; font-family: inherit; font-weight: bold;
+            cursor: pointer; transition: 0.2s; margin: 10px;
+            box-shadow: 0 0 10px var(--neon-green);
+            text-transform: uppercase;
+        }
+        button:hover {
+            background: var(--neon-green); color: black;
+            box-shadow: 0 0 30px var(--neon-green); transform: scale(1.1);
+        }
+
+        /* --- 1. BIOLOGÍA: PLACA DE PETRI --- */
+        #petri-dish {
+            width: 400px; height: 400px;
+            border-radius: 50%;
+            border: 8px solid rgba(255,255,255,0.2);
+            box-shadow: 0 0 50px var(--neon-green) inset, 0 0 20px var(--neon-green);
+            position: relative; overflow: hidden;
+            background: radial-gradient(circle, #001100, #000);
+            cursor: crosshair;
+        }
+        .cell {
+            position: absolute; border-radius: 50%;
+            transform: translate(-50%, -50%);
+            display: flex; justify-content: center; align-items: center;
+            font-size: 20px; transition: transform 0.1s;
+            mix-blend-mode: screen;
+            animation: wobble 2s infinite;
+        }
+        .cell::after {
+            content: ''; position: absolute; top: 20%; left: 20%;
+            width: 20%; height: 20%; background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+        }
+
+        /* --- 2. QUÍMICA: TABLA PERIÓDICA --- */
+        .chemistry-lab {
+            display: flex; gap: 40px; flex-wrap: wrap; justify-content: center;
+        }
+        .element-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+        }
+        .element {
+            width: 70px; height: 70px;
+            border: 2px solid #555;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; transition: 0.3s;
+            background: rgba(255,255,255,0.05);
+        }
+        .element:hover { border-color: white; transform: scale(1.1); z-index: 10; }
+        .element.selected { background: var(--neon-yellow); color: black; border-color: var(--neon-yellow); box-shadow: 0 0 20px var(--neon-yellow); }
+        .element b { font-size: 1.5rem; }
+        .element small { font-size: 0.7rem; }
+
+        .mixing-chamber {
+            width: 300px; height: 300px;
+            border: 4px dashed var(--neon-blue);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            position: relative;
+        }
+        #reaction-result {
+            font-size: 1.5rem; font-weight: bold; color: var(--neon-yellow);
+            text-align: center; padding: 20px;
+            min-height: 100px;
+        }
+
+        /* --- 3. FÍSICA: ACELERADOR --- */
+        #collider-canvas {
+            border: 2px solid var(--neon-purple);
+            background: rgba(20, 0, 20, 0.3);
+            cursor: pointer;
+        }
+
+        /* --- 4. NATURALEZA: ARBOL FRACTAL --- */
+        #nature-canvas {
+            border: 2px solid var(--neon-pink);
+            background: #050005;
+            cursor: crosshair;
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        /* --- 5. UNIVERSO: NEBULOSA --- */
+        #universe-canvas {
+            border: 2px solid white;
+            background: black;
+            cursor: none; /* Cursor personalizado */
+        }
+
+        /* ANIMACIONES CSS */
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes wobble { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.1, 0.9); } }
+        @keyframes explosion { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(5); opacity: 0; } }
+        
+        .boom-effect {
+            position: absolute; width: 100%; height: 100%;
+            background: radial-gradient(circle, white, transparent);
+            animation: explosion 0.5s forwards; pointer-events: none;
+        }
+
+        /* --- MENSAJES FLOTANTES --- */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: white; color: black; padding: 10px 20px; border-radius: 20px;
+            font-weight: bold; opacity: 0; transition: 0.5s; pointer-events: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- HEADER -->
+    <section>
+        <h1 style="color: var(--neon-green)">LABORATORIO<br>ALUCINÓGENO</h1>
+        <h2 style="font-size: 1rem; color:white;">Ciencia Inexacta y Peligrosa</h2>
+        <p>⚠️ Precaución: No intentes esto en una escuela de verdad.</p>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+            <button onclick="scrollToSection('biology')">🧬 Biología</button>
+            <button onclick="scrollToSection('chemistry')">⚗️ Química</button>
+            <button onclick="scrollToSection('physics')">⚛️ Física</button>
+            <button onclick="scrollToSection('nature')" style="border-color:var(--neon-pink); color:var(--neon-pink)">🌸 Naturaleza</button>
+            <button onclick="scrollToSection('universe')" style="border-color:white; color:white">🌌 Universo</button>
+        </div>
+    </section>
+
+    <!-- 1. BIOLOGÍA: CÉLULAS FIESTERAS -->
+    <section id="biology">
+        <h2>🧫 La Placa de Petri Disco</h2>
+        <p>Haz clic para alimentar a las células. Ellas se dividen, mutan y bailan.</p>
+        
+        <div id="petri-dish" onclick="addNutrient(event)">
+            <!-- Las células viven aquí -->
+        </div>
+        
+        <div style="margin-top:20px;">
+            <button onclick="mutateAll()">☢️ Radiación UV (Mutar)</button>
+            <button onclick="clearPetri()">🧪 Cloro (Limpiar)</button>
+        </div>
+        <p id="bio-status" style="font-size:0.9rem; color:var(--neon-green)">Población: 0 | Estado: Aburrido</p>
+    </section>
+
+    <!-- 2. QUÍMICA: ALQUIMIA ABSURDA -->
+    <section id="chemistry">
+        <h2>⚗️ Tabla Periódica del Caos</h2>
+        <p>Selecciona 2 elementos y mézclalos. La lógica no aplica aquí.</p>
+        
+        <div class="chemistry-lab">
+            <div class="element-grid">
+                <!-- Elementos Reales -->
+                <div class="element" onclick="selectElement(this, 'H')"><b>H</b><small>Hidrógeno</small></div>
+                <div class="element" onclick="selectElement(this, 'O')"><b>O</b><small>Oxígeno</small></div>
+                <div class="element" onclick="selectElement(this, 'Na')"><b>Na</b><small>Sodio</small></div>
+                <div class="element" onclick="selectElement(this, 'Cl')"><b>Cl</b><small>Cloro</small></div>
+                <div class="element" onclick="selectElement(this, 'Au')"><b>Au</b><small>Oro</small></div>
+                <div class="element" onclick="selectElement(this, 'U')"><b>U</b><small>Uranio</small></div>
+                <div class="element" onclick="selectElement(this, 'He')"><b>He</b><small>Helio</small></div>
+                <div class="element" onclick="selectElement(this, 'C')"><b>C</b><small>Carbono</small></div>
+                <!-- Elementos "Especiales" -->
+                <div class="element" onclick="selectElement(this, '🍕')"><b>🍕</b><small>Pizza</small></div>
+                <div class="element" onclick="selectElement(this, '👽')"><b>👽</b><small>Alien</small></div>
+                <div class="element" onclick="selectElement(this, '💩')"><b>💩</b><small>Misterio</small></div>
+                <div class="element" onclick="selectElement(this, '❤️')"><b>❤️</b><small>Amor</small></div>
+            </div>
+
+            <div class="mixing-chamber">
+                <div style="font-size: 2rem; margin-bottom: 10px;">👇 Reactor 👇</div>
+                <div id="slots" style="display:flex; gap:10px; font-size:2rem; margin-bottom:20px;">
+                    <span id="slot1">?</span> + <span id="slot2">?</span>
+                </div>
+                <button onclick="mixElements()" style="border-color:var(--neon-yellow); color:var(--neon-yellow);">🔥 MEZCLAR 🔥</button>
+                <div id="reaction-result">...Esperando reactivos...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. FÍSICA: COLISIONADOR -->
+    <section id="physics">
+        <h2>⚛️ Acelerador de Partículas</h2>
+        <p>Haz clic para inyectar protones. Mira cómo rompen la realidad.</p>
+        <canvas id="collider-canvas" width="800" height="400"></canvas>
+        <div style="margin-top:10px;">
+            <span style="color:var(--neon-purple)">Velocidad de la Luz: <span id="speed-meter">0%</span></span>
+        </div>
+    </section>
+
+    <!-- 4. NATURALEZA: ARBOL FRACTAL -->
+    <section id="nature">
+        <h2 style="color:var(--neon-pink)">🌸 Botánica Recursiva</h2>
+        <p>Planta semillas matemáticas. La naturaleza es solo código repetitivo.</p>
+        <canvas id="nature-canvas" width="800" height="500"></canvas>
+        <div style="margin-top:10px;">
+            <button onclick="clearNature()" style="border-color:var(--neon-pink); color:var(--neon-pink)">🪓 Talar Todo</button>
+            <p style="font-size:0.8rem; margin-top:5px;">Haz clic en el cuadro negro para plantar un árbol fractálico.</p>
+        </div>
+    </section>
+
+    <!-- 5. UNIVERSO: NEBULOSA -->
+    <section id="universe">
+        <h2 style="color:white; text-shadow:0 0 10px white;">🌌 Sastrería Cósmica</h2>
+        <p>Pinta el tejido del espacio-tiempo. Crea nebulosas y agujeros negros.</p>
+        <canvas id="universe-canvas" width="800" height="500"></canvas>
+        <div style="margin-top:10px;">
+            <button onclick="resetUniverse()" style="border-color:white; color:white">💥 Big Bang (Reset)</button>
+            <p style="font-size:0.8rem; margin-top:5px;">Arrastra para pintar nebulosas. Clic para colapsar estrellas.</p>
+        </div>
+    </section>
+
+    <div id="toast" class="toast">¡Mensaje!</div>
+
+    <script>
+        // --- UTILIDADES ---
+        const playTone = (freq, type='sine', dur=0.1) => {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.value = freq;
+            osc.type = type;
+            gain.gain.value = 0.1;
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(); osc.stop(ctx.currentTime + dur);
+        };
+
+        function showToast(msg) {
+            const toastEl = document.getElementById('toast');
+            toastEl.innerText = msg; toastEl.style.opacity = 1; toastEl.style.bottom = '50px';
+            setTimeout(() => { toastEl.style.opacity = 0; toastEl.style.bottom = '20px'; }, 2000);
+        }
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({behavior: 'smooth'});
+        }
+
+        // --- 1. BIOLOGÍA: CÉLULAS ---
+        const petri = document.getElementById('petri-dish');
+        const bioStatus = document.getElementById('bio-status');
+        let cells = [];
+        const emojis = ['🦠', '🧬', '🩸', '🐸', '👁️', '🦖', '🍄'];
+
+        function createCell(x, y, type) {
+            const el = document.createElement('div');
+            el.className = 'cell';
+            el.style.left = x + 'px'; el.style.top = y + 'px';
+            el.style.width = (Math.random()*30 + 20) + 'px';
+            el.style.height = el.style.width;
+            el.style.backgroundColor = `hsl(${Math.random()*360}, 100%, 50%)`;
+            el.innerHTML = type || emojis[0];
+            
+            // Datos lógicos
+            const cellData = {
+                el: el,
+                x: x, y: y,
+                vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2,
+                w: parseInt(el.style.width)
+            };
+            
+            petri.appendChild(el);
+            cells.push(cellData);
+            updateBioStats();
+            playTone(400 + Math.random()*200, 'triangle');
+        }
+
+        function addNutrient(e) {
+            const rect = petri.getBoundingClientRect();
+            createCell(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function mutateAll() {
+            cells.forEach(c => {
+                c.el.innerHTML = emojis[Math.floor(Math.random() * emojis.length)];
+                c.el.style.filter = `hue-rotate(${Math.random()*360}deg)`;
+                c.vx *= 1.5; c.vy *= 1.5; // Agitar
+            });
+            showToast("¡Mutación Masiva Exitosa!");
+            playTone(100, 'sawtooth', 0.5);
+        }
+
+        function clearPetri() {
+            petri.innerHTML = ''; cells = []; updateBioStats();
+        }
+
+        function updateBioStats() {
+            bioStatus.innerText = `Población: ${cells.length} | Estado: ${cells.length > 20 ? 'SUPERPOBLACIÓN INMINENTE' : 'Estable'}`;
+        }
+
+        // Loop Biológico
+        function bioLoop() {
+            cells.forEach(c => {
+                c.x += c.vx; c.y += c.vy;
+                
+                // Bordes circulares (simple box approximation para rendimiento)
+                const r = 200; // Radio petri
+                const cx = 200, cy = 200;
+                const dist = Math.sqrt((c.x-cx)**2 + (c.y-cy)**2);
+                
+                if (dist > r - c.w/2) {
+                    c.vx *= -1; c.vy *= -1;
+                    // Probabilidad de mitosis al chocar
+                    if(Math.random() > 0.9 && cells.length < 50) {
+                        createCell(c.x, c.y, c.el.innerHTML);
+                    }
+                }
+                c.el.style.left = c.x + 'px'; c.el.style.top = c.y + 'px';
+            });
+            requestAnimationFrame(bioLoop);
+        }
+        bioLoop();
+
+        // --- 2. QUÍMICA: LÓGICA DE MEZCLA ---
+        let selected = [];
+        const slot1 = document.getElementById('slot1');
+        const slot2 = document.getElementById('slot2');
+        const resultBox = document.getElementById('reaction-result');
+
+        function selectElement(el, symbol) {
+            // Animación visual
+            playTone(800, 'sine', 0.05);
+            
+            if (selected.length < 2) {
+                selected.push(symbol);
+                el.classList.add('selected');
+            } else {
+                // Reiniciar selección si ya hay 2
+                document.querySelectorAll('.element').forEach(e => e.classList.remove('selected'));
+                selected = [symbol];
+                el.classList.add('selected');
+            }
+            updateSlots();
+        }
+
+        function updateSlots() {
+            slot1.innerText = selected[0] || '?';
+            slot2.innerText = selected[1] || '?';
+            resultBox.innerText = "...";
+        }
+
+        function mixElements() {
+            if (selected.length !== 2) {
+                showToast("¡Necesitas 2 elementos!");
+                return;
+            }
+
+            const combo = selected.sort().join('+'); // Ordenar para que H+O sea igual que O+H
+            let res = "";
+            let anim = "";
+
+            // BASE DE DATOS DE REACCIONES ABSURDAS
+            const db = {
+                'H+O': { t: "💦 ¡Agua! (Mojaste tu teclado)", a: "💧" },
+                'Na+Cl': { t: "🧂 Sal (Está un poco sosa)", a: "🧂" },
+                'H+H': { t: "🎈 Hidrógeno (Hindenburg 2.0)", a: "💥" },
+                'He+He': { t: "🐿️ Voz de Ardilla Activada", a: "🎤" },
+                'C+O': { t: "🌫️ Smog (Tose un poco)", a: "🏭" },
+                'Au+Au': { t: "💰 ¡Capitalismo Salvaje!", a: "🤑" },
+                'U+U': { t: "☢️ Chernobyl Edición Casera", a: "💀" },
+                'Cl+Na': { t: "🧂 Sal", a: "🧂" }, // Redundante por sort, pero por seguridad
+                'C+H': { t: "⛽ Gasolina (¡No fumes!)", a: "🔥" },
+                'O+U': { t: "💚 Brillo Verde Sospechoso", a: "❇️" },
+                '👽+U': { t: "🛸 Invasión Iniciada", a: "👾" },
+                '🍕+💩': { t: "🤢 Indigestión Fatal", a: "🤮" },
+                'Au+❤️': { t: "💍 Boda (Game Over)", a: "👰" },
+                'He+O': { t: "🎈 Un globo flotando", a: "🎈" },
+                '👽+H': { t: "🧪 Sangre de Alien (Ácida)", a: "🌡️" }
+            };
+
+            const reaction = db[combo];
+            
+            // Efecto visual
+            const chamber = document.querySelector('.mixing-chamber');
+            const boom = document.createElement('div');
+            boom.className = 'boom-effect';
+            chamber.appendChild(boom);
+            setTimeout(() => boom.remove(), 500);
+
+            if (reaction) {
+                resultBox.innerHTML = `<span style="font-size:3rem">${reaction.a}</span><br>${reaction.t}`;
+                playTone(200, 'square', 0.5);
+            } else {
+                // Reacción genérica aleatoria
+                const randoms = ["💩 Lodo Marrón", "💥 ¡Explosión Menor!", "🌫️ Humo Negro", "🦠 Nueva Pandemia"];
+                resultBox.innerText = randoms[Math.floor(Math.random()*randoms.length)];
+                playTone(100, 'sawtooth', 0.5);
+            }
+            
+            // Limpiar
+            document.querySelectorAll('.element').forEach(e => e.classList.remove('selected'));
+            selected = [];
+            setTimeout(updateSlots, 2000);
+        }
+
+        // --- 3. FÍSICA: COLISIONADOR ---
+        const collCanvas = document.getElementById('collider-canvas');
+        const cCtx = collCanvas.getContext('2d');
+        let particles = [];
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                // Velocidades absurdas
+                this.angle = Math.random() * Math.PI * 2;
+                this.speed = Math.random() * 5 + 2;
+                this.color = `hsl(${Math.random()*360}, 100%, 50%)`;
+                this.size = Math.random() * 5 + 2;
+            }
+            update() {
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+                
+                // Rebotar y acelerar
+                if(this.x < 0 || this.x > collCanvas.width) {
+                    this.angle = Math.PI - this.angle;
+                    this.speed *= 1.05; // Gana energía
+                    this.color = '#fff'; // Flash blanco
+                }
+                if(this.y < 0 || this.y > collCanvas.height) {
+                    this.angle = -this.angle;
+                    this.speed *= 1.05;
+                    this.color = '#fff';
+                }
+                
+                // Limite de velocidad (C)
+                if(this.speed > 50) this.speed = 50; 
+            }
+            draw() {
+                cCtx.beginPath();
+                cCtx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+                cCtx.fillStyle = this.color;
+                cCtx.fill();
+                // Trail
+                cCtx.strokeStyle = this.color;
+                cCtx.beginPath();
+                cCtx.moveTo(this.x, this.y);
+                cCtx.lineTo(this.x - Math.cos(this.angle)*this.speed*2, this.y - Math.sin(this.angle)*this.speed*2);
+                cCtx.stroke();
+            }
+        }
+
+        collCanvas.addEventListener('mousedown', (e) => {
+            const r = collCanvas.getBoundingClientRect();
+            // Inyectar paquete de protones
+            for(let i=0; i<10; i++) {
+                particles.push(new Particle(e.clientX - r.left, e.clientY - r.top));
+            }
+            playTone(600, 'sawtooth', 0.1);
+        });
+
+        function physicsLoop() {
+            // Estela (Trail effect)
+            cCtx.fillStyle = 'rgba(20, 0, 20, 0.2)';
+            cCtx.fillRect(0, 0, collCanvas.width, collCanvas.height);
+            
+            let totalSpeed = 0;
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+                totalSpeed += p.speed;
+                // Reset color
+                if(Math.random() > 0.8) p.color = `hsl(${Math.random()*360}, 100%, 50%)`;
+            });
+
+            // Medidor de caos
+            const meter = document.getElementById('speed-meter');
+            const pct = Math.min(100, Math.floor(totalSpeed / 5));
+            meter.innerText = pct + "%";
+            meter.style.color = `hsl(${120 - pct}, 100%, 50%)`; // Verde a Rojo
+
+            requestAnimationFrame(physicsLoop);
+        }
+        physicsLoop();
+
+        // --- 4. NATURALEZA: ARBOL FRACTAL ---
+        const natCanvas = document.getElementById('nature-canvas');
+        const natCtx = natCanvas.getContext('2d');
+        
+        function drawBranch(startX, startY, len, angle, branchWidth, color1, color2) {
+            natCtx.beginPath();
+            natCtx.save();
+            natCtx.strokeStyle = `hsl(${Math.random() > 0.5 ? color1 : color2}, 100%, 50%)`;
+            natCtx.lineWidth = branchWidth;
+            natCtx.translate(startX, startY);
+            natCtx.rotate(angle * Math.PI/180);
+            natCtx.moveTo(0,0);
+            natCtx.lineTo(0, -len);
+            natCtx.stroke();
+
+            if (len < 10) {
+                // Hojas
+                natCtx.beginPath();
+                natCtx.arc(0, -len, 5, 0, Math.PI/2);
+                natCtx.fillStyle = `hsl(${Math.random()*360}, 100%, 50%)`;
+                natCtx.fill();
+                natCtx.restore();
+                return;
+            }
+
+            drawBranch(0, -len, len*0.75, angle + Math.random()*30, branchWidth*0.7, color1, color2);
+            drawBranch(0, -len, len*0.75, angle - Math.random()*30, branchWidth*0.7, color1, color2);
+            natCtx.restore();
+        }
+
+        natCanvas.addEventListener('mousedown', (e) => {
+            const rect = natCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const hue = Math.random() * 360;
+            drawBranch(x, y, 80, 0, 10, hue, hue + 40);
+            playTone(300 + Math.random()*300, 'sine', 0.2);
+        });
+
+        function clearNature() {
+            natCtx.clearRect(0, 0, natCanvas.width, natCanvas.height);
+        }
+
+        // --- 5. UNIVERSO: NEBULOSA ---
+        const uniCanvas = document.getElementById('universe-canvas');
+        const uniCtx = uniCanvas.getContext('2d');
+        let uniParticles = [];
+
+        class StarDust {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.life = 100;
+                this.hue = Math.random() * 60 + 200; // Blue/Purple range
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.life--;
+                this.vx *= 0.99; this.vy *= 0.99;
+            }
+            draw() {
+                uniCtx.fillStyle = `hsla(${this.hue}, 100%, 70%, ${this.life/100})`;
+                uniCtx.fillRect(this.x, this.y, 2, 2);
+            }
+        }
+
+        let isPaintingUniverse = false;
+        uniCanvas.addEventListener('mousedown', () => isPaintingUniverse = true);
+        window.addEventListener('mouseup', () => isPaintingUniverse = false);
+        
+        uniCanvas.addEventListener('mousemove', (e) => {
+            if(!isPaintingUniverse) return;
+            const rect = uniCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            for(let i=0; i<5; i++) {
+                uniParticles.push(new StarDust(x, y));
+            }
+        });
+
+        uniCanvas.addEventListener('click', (e) => {
+            // Agujero negro
+            const rect = uniCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            uniCtx.beginPath();
+            uniCtx.arc(x, y, 20, 0, Math.PI*2);
+            uniCtx.fillStyle = 'black';
+            uniCtx.fill();
+            uniCtx.strokeStyle = 'white';
+            uniCtx.stroke();
+            
+            // Absorber particulas cercanas (visual simple)
+            uniParticles = uniParticles.filter(p => {
+                const dist = Math.sqrt((p.x-x)**2 + (p.y-y)**2);
+                return dist > 50;
+            });
+            playTone(100, 'triangle', 0.5);
+        });
+
+        function resetUniverse() {
+            uniParticles = [];
+            uniCtx.fillStyle = 'black';
+            uniCtx.fillRect(0, 0, uniCanvas.width, uniCanvas.height);
+        }
+        resetUniverse(); // init bg
+
+        function universeLoop() {
+            // Trail sutil para efecto gas
+            uniCtx.fillStyle = 'rgba(0,0,0,0.05)';
+            uniCtx.fillRect(0, 0, uniCanvas.width, uniCanvas.height);
+
+            uniParticles.forEach((p, index) => {
+                p.update();
+                p.draw();
+                if(p.life <= 0) uniParticles.splice(index, 1);
+            });
+            requestAnimationFrame(universeLoop);
+        }
+        universeLoop();
+
+
+        // --- FONDO DE ADN ---
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
+        let dnaTime = 0; // Renombrado de 't' a 'dnaTime'
+
+        function drawBg() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            
+            for(let x=0; x<bgCanvas.width; x+=50) {
+                const y1 = Math.sin(x*0.01 + dnaTime) * 100 + bgCanvas.height/2;
+                const y2 = Math.sin(x*0.01 + dnaTime + Math.PI) * 100 + bgCanvas.height/2;
+                
+                bgCtx.fillStyle = 'var(--neon-purple)';
+                bgCtx.fillRect(x, y1, 4, 4);
+                bgCtx.fillStyle = 'var(--neon-green)';
+                bgCtx.fillRect(x, y2, 4, 4);
+                
+                // Conectores ADN
+                if(x%100 === 0) {
+                    bgCtx.strokeStyle = 'rgba(255,255,255,0.1)';
+                    bgCtx.beginPath(); bgCtx.moveTo(x, y1); bgCtx.lineTo(x, y2); bgCtx.stroke();
+                }
+            }
+            dnaTime += 0.02;
+            requestAnimationFrame(drawBg);
+        }
+        drawBg();
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
+        });
+
+    </script>
+</body>
+</html>
