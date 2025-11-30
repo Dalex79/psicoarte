@@ -3,923 +3,960 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arte Psicodélico - Experiencia Interactiva</title>
+    <title>Mega Estudio Sónico Psicodélico - 15 Experiencias</title>
     <style>
-        /* --- ESTÉTICA GENERAL Y VARIABLES --- */
         :root {
-            --acid-green: #ccff00;
-            --acid-pink: #ff0099;
-            --acid-cyan: #00ffff;
-            --acid-purple: #9d00ff;
-            --acid-orange: #ff6600;
-            --bg-deep: #050010;
-            --cursor-size: 20px;
+            --neon-pink: #ff00ff;
+            --neon-cyan: #00ffff;
+            --neon-lime: #39ff14;
+            --neon-yellow: #fff01f;
+            --neon-red: #ff3333;
+            --bg-black: #050505;
+            --panel-bg: rgba(20, 20, 30, 0.6);
         }
 
-        * {
-            box-sizing: border-box;
-            /* cursor: none; <-- ELIMINADO: Restauramos el cursor nativo globalmente */
-            user-select: none;
-        }
+        * { box-sizing: border-box; user-select: none; }
 
         body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-deep);
+            margin: 0; padding: 0;
+            background-color: var(--bg-black);
             color: white;
             font-family: 'Courier New', monospace;
             overflow-x: hidden;
-            perspective: 1000px; /* Para el efecto 3D global */
-            transition: background-color 0.5s, filter 0.1s;
-            cursor: default; /* Cursor por defecto para la navegación */
+            text-align: center;
         }
 
-        body.night-mode {
-            --bg-deep: #000000;
-            filter: invert(1) hue-rotate(180deg);
-        }
+        /* --- UI GLOBAL --- */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-pink); border-radius: 5px; }
 
-        /* --- CURSOR PERSONALIZADO (Ahora es un acompañante visual) --- */
-        #custom-cursor {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: var(--cursor-size);
-            height: var(--cursor-size);
-            border: 2px solid white;
-            border-radius: 50%;
-            pointer-events: none; /* Permite hacer clic a través de él */
-            z-index: 9999;
-            mix-blend-mode: difference;
-            transition: transform 0.1s;
-            box-shadow: 0 0 10px white;
-            /* Opcional: hacerlo un poco transparente para que no estorbe */
-            opacity: 0.8;
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10000; transition: opacity 0.5s; cursor: pointer;
         }
-        
-        .cursor-trail {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            background: var(--acid-pink);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9998;
-            opacity: 0.7;
-            animation: fadeOut 0.5s forwards;
-        }
+        #start-overlay h1 { animation: pulse 1s infinite; color: var(--neon-cyan); font-size: 3rem; }
 
-        @keyframes fadeOut {
-            to { opacity: 0; transform: scale(0); }
+        nav {
+            position: sticky; top: 0; z-index: 1000;
+            background: rgba(0,0,0,0.9); border-bottom: 1px solid var(--neon-pink);
+            padding: 10px; overflow-x: auto; white-space: nowrap;
+            display: flex; gap: 10px;
         }
-
-        /* --- FONDO VIVO --- */
-        #bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2;
-            filter: blur(2px) contrast(1.5);
+        nav button {
+            background: transparent; color: white; border: 1px solid var(--neon-cyan);
+            padding: 5px 10px; font-size: 0.8rem; cursor: pointer;
         }
+        nav button:hover { background: var(--neon-cyan); color: black; }
 
-        /* --- CONTENEDOR 3D (REALIDAD DOBLEGADA) --- */
-        #world-wrapper {
-            transform-style: preserve-3d;
-            transition: transform 0.1s ease-out;
-            will-change: transform;
-        }
-
-        /* --- SECCIONES Y TIPOGRAFÍA --- */
         section {
-            min-height: 100vh;
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            min-height: 80vh; padding: 40px 20px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border-bottom: 2px dashed rgba(255,255,255,0.1);
             position: relative;
         }
 
-        h1 {
-            font-size: 5rem;
-            text-transform: uppercase;
-            text-align: center;
-            animation: glitch-text 3s infinite;
-            text-shadow: 4px 4px 0px var(--acid-purple);
-            mix-blend-mode: screen;
-            line-height: 0.9;
-            margin-bottom: 20px;
-        }
+        h2 { font-size: 2rem; margin-bottom: 10px; text-shadow: 2px 2px var(--neon-pink); }
+        p { color: #aaa; margin-bottom: 20px; max-width: 600px; }
 
-        h2 {
-            font-size: 2.5rem;
-            color: var(--acid-cyan);
-            text-shadow: 0 0 10px var(--acid-cyan);
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-        }
-        
-        p.poetic-desc {
-            font-size: 1.2rem;
-            max-width: 600px;
-            text-align: center;
-            opacity: 0.8;
-            font-style: italic;
-            margin-bottom: 30px;
-            color: #ddd;
-        }
-
-        button {
-            background: transparent;
-            color: white;
-            border: 2px solid var(--acid-green);
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            font-family: inherit;
-            margin: 10px;
-            transition: 0.3s;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 0 15px rgba(204, 255, 0, 0.2);
+        canvas {
+            background: rgba(255,255,255,0.05);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border: 1px solid #333;
             cursor: pointer;
+            max-width: 100%;
         }
 
-        button:hover {
-            background: var(--acid-green);
-            color: black;
-            box-shadow: 0 0 30px var(--acid-green);
-            transform: scale(1.1) rotate(-2deg);
+        button.control-btn {
+            margin-top: 15px; padding: 10px 20px;
+            background: #222; color: var(--neon-lime); border: 1px solid var(--neon-lime);
+            cursor: pointer; font-family: inherit; font-weight: bold;
         }
+        button.control-btn:hover { background: var(--neon-lime); color: black; }
 
-        button:active {
-            transform: scale(0.9);
+        /* BOTÓN DE MUTE */
+        .mute-toggle {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(0,0,0,0.5); border: 1px solid var(--neon-red);
+            color: var(--neon-red); padding: 5px 10px; font-size: 0.8rem;
+            cursor: pointer; transition: 0.3s;
         }
+        .mute-toggle:hover { background: var(--neon-red); color: white; }
+        .mute-toggle.muted { background: var(--neon-red); color: white; border-color: white; }
 
-        /* --- 1. PAINT PSICODÉLICO --- */
-        .canvas-container {
-            position: relative;
-            box-shadow: 0 0 50px rgba(255, 0, 153, 0.3);
-            border: 4px double var(--acid-pink);
-            /* Ocultamos cursor nativo SOLO DENTRO del área de dibujo */
-            cursor: none; 
-        }
-        #paint-canvas { background: #000; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* --- 4. JUEGO ARTE VIVO XL --- */
-        #game-area {
-            width: 90%;
-            height: 70vh;
-            border: 2px dashed var(--acid-cyan);
-            position: relative;
-            overflow: hidden;
-            background: rgba(0, 0, 0, 0.3);
-            /* Ocultamos cursor nativo SOLO DENTRO del juego */
-            cursor: none;
-        }
+        /* Estilos Específicos */
+        .seq-grid { display: grid; gap: 5px; }
+        .seq-row { display: flex; gap: 5px; }
+        .seq-cell { width: 30px; height: 30px; border: 1px solid #444; cursor: pointer; }
+        .seq-cell.active { background: var(--neon-pink); box-shadow: 0 0 10px var(--neon-pink); }
+        .seq-cell.playing { border-color: white; transform: scale(1.1); }
 
-        .game-entity {
-            position: absolute;
-            transition: filter 0.3s;
-            mix-blend-mode: hard-light;
-            cursor: grab;
-        }
-        .game-entity:hover { filter: brightness(1.5) hue-rotate(90deg); }
-        .game-entity:active { cursor: grabbing; }
-
-        /* --- 7. GALERÍA DE ESTILOS --- */
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            width: 100%;
-            max-width: 1200px;
-        }
-        
-        .style-box {
-            height: 250px;
-            border: 1px solid rgba(255,255,255,0.2);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            transition: 0.5s;
-            cursor: pointer; /* Cursor de mano para indicar interacción */
-        }
-
-        /* Estilos específicos de galería */
-        .cubism-box { background: linear-gradient(135deg, #f09, #30f); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
-        .surreal-box { background: radial-gradient(circle, #ff0, #f00); border-radius: 50%; width: 250px; margin: auto; }
-        .pop-box { background: white; color: black; background-image: radial-gradient(black 20%, transparent 20%); background-size: 20px 20px; }
-        .op-box { background: repeating-radial-gradient(black, white 10px, black 20px); animation: pulse-op 2s infinite linear; }
-        .abstract-box { background: #111; }
-
-        /* --- ZONAS ESPECÍFICAS SIN CURSOR NATIVO --- */
-        #fractal-canvas, #gen-canvas {
-            cursor: none; /* Solo ocultar cursor nativo sobre los canvas interactivos */
-        }
-
-        /* --- 8. FRASES POÉTICAS --- */
-        .poetry-text {
-            font-size: 2rem;
-            max-width: 800px;
-            text-align: center;
-            opacity: 0;
-            filter: blur(10px);
-            transform: scale(0.8);
-            transition: 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .poetry-visible {
-            opacity: 1;
-            filter: blur(0);
-            transform: scale(1);
-            animation: text-smoke 3s infinite alternate;
-        }
-
-        /* --- ANIMACIONES GLOBALES --- */
-        @keyframes glitch-text {
-            0% { transform: translate(0); text-shadow: 4px 4px 0px var(--acid-purple); }
-            20% { transform: translate(-5px, 5px); text-shadow: -4px -4px 0px var(--acid-green); clip-path: inset(0 0 50% 0); }
-            40% { transform: translate(5px, -5px); text-shadow: 4px -4px 0px var(--acid-cyan); clip-path: inset(50% 0 0 0); }
-            60% { transform: translate(0); clip-path: inset(0 0 0 0); }
-            100% { transform: translate(0); }
-        }
-
-        @keyframes pulse-op {
-            0% { background-size: 100% 100%; }
-            50% { background-size: 150% 150%; }
-            100% { background-size: 100% 100%; }
-        }
-
-        @keyframes text-smoke {
-            from { text-shadow: 0 0 10px var(--acid-pink); filter: hue-rotate(0deg); }
-            to { text-shadow: 0 -20px 20px var(--acid-cyan); filter: hue-rotate(90deg); }
-        }
-
-        /* Efecto de ruido estático global */
-        .noise-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 999;
-            opacity: 0.05;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        }
-        
     </style>
 </head>
 <body>
 
-    <div class="noise-overlay"></div>
-    <div id="custom-cursor"></div>
-    <canvas id="bg-canvas"></canvas>
-
-    <!-- WRAPPER 3D PARA EL EFECTO "REALIDAD DOBLEGADA" -->
-    <div id="world-wrapper">
-        
-        <!-- HERO -->
-        <section id="hero">
-            <h1>ARTE<br><span style="font-size:0.5em; color:var(--acid-green)">PSICODÉLICO</span></h1>
-            <p class="poetic-desc">Donde la realidad se dobla y los colores respiran.</p>
-            <p>Mueve el mouse para distorsionar la realidad. Haz scroll para mutar el universo.</p>
-            <button onclick="toggleNightMode()">🌑 Noche Cósmica</button>
-        </section>
-
-        <!-- 1. PAINT PSICODÉLICO EXTREMO -->
-        <section id="paint">
-            <h2>Lienzo Fractal</h2>
-            <p class="poetic-desc">Tu pincel es una varita mágica; la velocidad define la forma.</p>
-            <div class="canvas-container">
-                <canvas id="paint-canvas" width="800" height="500"></canvas>
-            </div>
-            <div style="margin-top:20px; display:flex; flex-wrap:wrap; justify-content:center;">
-                <button onclick="p_melt()">🫠 Derretir</button>
-                <button onclick="p_fracture()">⚡ Fracturar</button>
-                <button onclick="p_toggleKaleido()" id="btn-kaleido">🌀 Kaleido Mode: OFF</button>
-                <button onclick="p_clear()">❌ Borrar</button>
-            </div>
-        </section>
-
-        <!-- 6. ZONA FRACTAL -->
-        <section id="fractal-zone">
-            <h2>Vórtice Matemático</h2>
-            <p class="poetic-desc">La geometría sagrada reacciona a tu presencia.</p>
-            <canvas id="fractal-canvas" width="600" height="600" style="border-radius:50%; box-shadow: 0 0 50px var(--acid-purple);"></canvas>
-        </section>
-
-        <!-- 4. JUEGO ARTE VIVO XL -->
-        <section id="game">
-            <h2>Collage Animado (Gravedad Cero)</h2>
-            <p class="poetic-desc">Formas libres en el vacío. Crea tu propia composición viva.</p>
-            <div id="game-area"></div>
-            <p><small>Arrastra para lanzar | Clic para clonar | Doble clic para mutar estilo</small></p>
-        </section>
-
-        <!-- 5. GENERADOR MUTANTE -->
-        <section id="generator">
-            <h2>Generador de Visiones</h2>
-            <p class="poetic-desc">Deja que el caos organice la belleza.</p>
-            <canvas id="gen-canvas" width="500" height="500" style="border: 2px solid white;"></canvas>
-            <div style="margin-top:10px;">
-                <button onclick="g_generate()">👁️ Revelar Visión</button>
-                <button onclick="g_toggleHypno()" id="btn-hypno">😵 Hipnosis: OFF</button>
-            </div>
-        </section>
-
-        <!-- 7. GALERÍA INTERACTIVA -->
-        <section id="gallery">
-            <h2>Galería de Estilos Vivientes</h2>
-            <p class="poetic-desc">Toca los movimientos artísticos y observa cómo reaccionan.</p>
-            <div class="gallery-grid">
-                <div class="style-box cubism-box" onmousemove="cubismEffect(this)" onmouseleave="resetStyle(this)">CUBISMO</div>
-                <div class="style-box surreal-box" onmouseenter="surrealMelt(this)">SURREAL</div>
-                <div class="style-box pop-box" onclick="popExplode(this)">POP ART!</div>
-                <div class="style-box op-box">OP ART</div>
-                <div class="style-box abstract-box" id="abstract-container">ABSTRACTO</div>
-            </div>
-        </section>
-
-        <!-- 8. POESÍA CÓSMICA -->
-        <section id="poetry">
-            <h2>Oráculo Poético</h2>
-            <div class="poetry-text" id="poem-display">"El silencio es un color que aún no has inventado."</div>
-            <button onclick="newPoem()">✨ Revelación Cósmica</button>
-        </section>
-
+    <div id="start-overlay" onclick="initAudio()">
+        <h1>CLICK PARA INICIAR EL SISTEMA</h1>
+        <p>15 Experiencias Sonoras Cargadas</p>
     </div>
 
+    <nav>
+        <button onclick="scrollToId('hero')">TOP</button>
+        <button onclick="scrollToId('s1')">1. Theremin</button>
+        <button onclick="scrollToId('s2')">2. Secuenciador</button>
+        <button onclick="scrollToId('s3')">3. Gravedad</button>
+        <button onclick="scrollToId('s4')">4. Arpa</button>
+        <button onclick="scrollToId('s5')">5. Péndulos</button>
+        <button onclick="scrollToId('s6')">6. Prisma</button>
+        <button onclick="scrollToId('s7')">7. Vocales</button>
+        <button onclick="scrollToId('s8')">8. Burbujas</button>
+        <button onclick="scrollToId('s9')">9. Ecos</button>
+        <button onclick="scrollToId('s10')">10. Cuerda</button>
+        <button onclick="scrollToId('s11')">11. Órbitas</button>
+        <button onclick="scrollToId('s12')">12. Radio</button>
+        <button onclick="scrollToId('s13')">13. Glitch</button>
+        <button onclick="scrollToId('s14')">14. Doppler</button>
+        <button onclick="scrollToId('s15')">15. Pintura</button>
+    </nav>
+
+    <section id="hero">
+        <h1 style="font-size:3rem; color:var(--neon-lime)">MEGA ESTUDIO SÓNICO</h1>
+        <p>Desciende por la madriguera del conejo digital.</p>
+    </section>
+
+    <!-- 1. THEREMIN -->
+    <section id="s1">
+        <button id="mute-s1" class="mute-toggle muted" onclick="toggleMute('s1')">🔇 ACTIVAR</button>
+        <h2>1. Theremin de Luz</h2>
+        <p>X = Tono | Y = Volumen</p>
+        <canvas id="c1" width="600" height="300"></canvas>
+    </section>
+
+    <!-- 2. SECUENCIADOR -->
+    <section id="s2">
+        <button id="mute-s2" class="mute-toggle muted" onclick="toggleMute('s2')">🔇 ACTIVAR</button>
+        <h2>2. Secuenciador Neón</h2>
+        <p>Crea patrones rítmicos.</p>
+        <div id="sequencer" class="seq-grid"></div>
+        <button class="control-btn" onclick="clearSeq()">Borrar Patrón</button>
+    </section>
+
+    <!-- 3. GRAVEDAD -->
+    <section id="s3">
+        <button id="mute-s3" class="mute-toggle muted" onclick="toggleMute('s3')">🔇 ACTIVAR</button>
+        <h2>3. Gravedad Musical</h2>
+        <p>Clic para soltar bolas que rebotan.</p>
+        <canvas id="c3" width="600" height="300"></canvas>
+        <button class="control-btn" onclick="balls=[]">Limpiar Bolas</button>
+    </section>
+
+    <!-- 4. ARPA LÁSER -->
+    <section id="s4">
+        <button id="mute-s4" class="mute-toggle muted" onclick="toggleMute('s4')">🔇 ACTIVAR</button>
+        <h2>4. Arpa Láser</h2>
+        <p>Pasa el mouse sobre las cuerdas de luz.</p>
+        <canvas id="c4" width="600" height="300"></canvas>
+    </section>
+
+    <!-- 5. PÉNDULOS -->
+    <section id="s5">
+        <button id="mute-s5" class="mute-toggle muted" onclick="toggleMute('s5')">🔇 ACTIVAR</button>
+        <h2>5. Péndulos Polirrítmicos</h2>
+        <p>Física oscilatoria creando armonía.</p>
+        <canvas id="c5" width="600" height="300"></canvas>
+        <button class="control-btn" onclick="resetPendulums()">Sincronizar</button>
+    </section>
+
+    <!-- 6. PRISMA DE LUZ (ANTES LLUVIA) -->
+    <section id="s6">
+        <button id="mute-s6" class="mute-toggle muted" onclick="toggleMute('s6')">🔇 ACTIVAR</button>
+        <h2>6. Prisma de Luz</h2>
+        <p>Pinta con luz. La altura define la pureza del tono.</p>
+        <canvas id="c6" width="600" height="300"></canvas>
+    </section>
+
+    <!-- 7. VOCALES (FORMANT) -->
+    <section id="s7">
+        <button id="mute-s7" class="mute-toggle muted" onclick="toggleMute('s7')">🔇 ACTIVAR</button>
+        <h2>7. Sintetizador de Vocales</h2>
+        <p>Mueve el mouse para cambiar entre A-E-I-O-U.</p>
+        <canvas id="c7" width="300" height="300" style="border-radius:50%; background:radial-gradient(circle, #333, #000)"></canvas>
+    </section>
+
+    <!-- 8. BURBUJAS FM -->
+    <section id="s8">
+        <button id="mute-s8" class="mute-toggle muted" onclick="toggleMute('s8')">🔇 ACTIVAR</button>
+        <h2>8. Burbujas FM</h2>
+        <p>Haz clic para crear burbujas que suenan al flotar.</p>
+        <canvas id="c8" width="600" height="300"></canvas>
+    </section>
+
+    <!-- 9. ECOS -->
+    <section id="s9">
+        <button id="mute-s9" class="mute-toggle muted" onclick="toggleMute('s9')">🔇 ACTIVAR</button>
+        <h2>9. Cámara de Eco</h2>
+        <p>Sonidos que se repiten en el infinito.</p>
+        <canvas id="c9" width="600" height="300"></canvas>
+    </section>
+
+    <!-- 10. CUERDA TENSA -->
+    <section id="s10">
+        <button id="mute-s10" class="mute-toggle muted" onclick="toggleMute('s10')">🔇 ACTIVAR</button>
+        <h2>10. La Cuerda Viva</h2>
+        <p>Arrastra la cuerda. Observa cómo brilla con la vibración.</p>
+        <canvas id="c10" width="600" height="200"></canvas>
+    </section>
+
+    <!-- 11. ORBITAS -->
+    <section id="s11">
+        <button id="mute-s11" class="mute-toggle muted" onclick="toggleMute('s11')">🔇 ACTIVAR</button>
+        <h2>11. Órbitas de Acordes</h2>
+        <p>Planetas que cantan al cruzar el horizonte.</p>
+        <canvas id="c11" width="400" height="400"></canvas>
+    </section>
+
+    <!-- 12. RADIO -->
+    <section id="s12">
+        <button id="mute-s12" class="mute-toggle muted" onclick="toggleMute('s12')">🔇 ACTIVAR</button>
+        <h2>12. Radio Cósmica</h2>
+        <p>Mueve el dial (mouse X) para encontrar la señal entre el ruido.</p>
+        <canvas id="c12" width="600" height="150" style="background:#112"></canvas>
+    </section>
+
+    <!-- 13. GLITCH GRID -->
+    <section id="s13">
+        <button id="mute-s13" class="mute-toggle muted" onclick="toggleMute('s13')">🔇 ACTIVAR</button>
+        <h2>13. Glitch Grid</h2>
+        <p>Pasa el mouse para causar errores digitales sonoros.</p>
+        <div id="glitch-grid" style="display:grid; grid-template-columns:repeat(10,1fr); gap:2px; width:600px; height:200px;"></div>
+    </section>
+
+    <!-- 14. DOPPLER -->
+    <section id="s14">
+        <button id="mute-s14" class="mute-toggle muted" onclick="toggleMute('s14')">🔇 ACTIVAR</button>
+        <h2>14. Túnel Doppler 3D</h2>
+        <p>Escucha cómo el sonido se acerca y se aleja (Usa Audífonos).</p>
+        <canvas id="c14" width="600" height="300"></canvas>
+    </section>
+
+    <!-- 15. PINTURA -->
+    <section id="s15">
+        <button id="mute-s15" class="mute-toggle muted" onclick="toggleMute('s15')">🔇 ACTIVAR</button>
+        <h2>15. Pintura Sonora</h2>
+        <p>Dibuja y el canvas se convierte en sonido.</p>
+        <canvas id="c15" width="600" height="300" style="background:black"></canvas>
+        <button class="control-btn" onclick="clearCanvas15()">Limpiar Lienzo</button>
+    </section>
+
     <script>
-        // --- SISTEMA DE AUDIO (Web Audio API) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // --- MOTOR DE AUDIO ---
+        let ac; // AudioContext
+        let master;
+        const scale = [130.81, 146.83, 164.81, 196.00, 220.00, 261.63, 293.66, 329.63, 392.00, 440.00]; // C Pentatonic
         
-        function playSound(type, freq, duration) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
+        // ESTADO DE MUTE (Todo inicia en TRUE / Apagado)
+        const muteStates = {
+            s1: true, s2: true, s3: true, s4: true, s5: true,
+            s6: true, s7: true, s8: true, s9: true, s10: true,
+            s11: true, s12: true, s13: true, s14: true, s15: true
+        };
+
+        function toggleMute(id) {
+            muteStates[id] = !muteStates[id];
+            const btn = document.getElementById('mute-' + id);
             
-            osc.type = type; // 'sine', 'square', 'sawtooth', 'triangle'
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            // Si está muteado (true) -> Mostrar opción para activar
+            // Si NO está muteado (false) -> Mostrar opción para silenciar
+            if (muteStates[id]) {
+                btn.innerText = "🔇 ACTIVAR";
+                btn.classList.add('muted');
+                // Lógica específica para sonidos continuos al apagar
+                if(id === 's12' && radioGain) radioGain.gain.value = 0;
+            } else {
+                btn.innerText = "🔊 SILENCIAR";
+                btn.classList.remove('muted');
+            }
+        }
+
+        function initAudio() {
+            if (ac) return;
+            ac = new (window.AudioContext || window.webkitAudioContext)();
+            master = ac.createGain();
+            master.gain.value = 0.3;
+            master.connect(ac.destination);
             
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            document.getElementById('start-overlay').style.opacity = 0;
+            setTimeout(() => document.getElementById('start-overlay').remove(), 500);
             
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+            // Iniciar loops
+            requestAnimationFrame(loopAll);
+            startSequencer();
+        }
+
+        function playOsc(freq, type, dur, vol=0.5, pan=0) {
+            if(!ac) return;
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+            const panner = ac.createStereoPanner();
+            
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ac.currentTime);
+            
+            panner.pan.value = pan;
+            gain.gain.setValueAtTime(vol, ac.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ac.currentTime + dur);
+            
+            osc.connect(panner);
+            panner.connect(gain);
+            gain.connect(master);
             
             osc.start();
-            osc.stop(audioCtx.currentTime + duration);
+            osc.stop(ac.currentTime + dur);
         }
 
-        // --- MOUSE Y 3D TILT ---
-        const cursor = document.getElementById('custom-cursor');
-        const world = document.getElementById('world-wrapper');
-        let mouseX = 0, mouseY = 0;
+        function scrollToId(id) { document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
 
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-            
-            // Mover cursor
-            cursor.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
-            
-            // Trail
-            if(Math.random() > 0.5) createTrail(mouseX, mouseY);
-
-            // 3D Tilt Effect
-            const xPercent = (mouseX / window.innerWidth) - 0.5;
-            const yPercent = (mouseY / window.innerHeight) - 0.5;
-            world.style.transform = `rotateY(${xPercent * 5}deg) rotateX(${-yPercent * 5}deg)`;
-        });
-
-        // Scroll reactivo (Cambio de color global)
-        window.addEventListener('scroll', () => {
-            const scrollPercent = window.scrollY / (document.body.scrollHeight - window.innerHeight);
-            const hueShift = scrollPercent * 360;
-            document.body.style.filter = `hue-rotate(${hueShift}deg)`;
-        });
-
-        document.addEventListener('mousedown', () => {
-            cursor.style.transform += ' scale(0.8)';
-            cursor.style.backgroundColor = 'white';
-            playSound('triangle', 300 + Math.random()*500, 0.2);
-        });
-
-        document.addEventListener('mouseup', () => {
-            cursor.style.backgroundColor = 'transparent';
-        });
-
-        function createTrail(x, y) {
-            const dot = document.createElement('div');
-            dot.classList.add('cursor-trail');
-            dot.style.left = x + 'px';
-            dot.style.top = y + 'px';
-            dot.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
-            document.body.appendChild(dot);
-            setTimeout(() => dot.remove(), 500);
-        }
-
-        // --- FONDO VIVO (PARTÍCULAS Y ONDAS) ---
-        const bgCanvas = document.getElementById('bg-canvas');
-        const bgCtx = bgCanvas.getContext('2d');
-        let bgW, bgH;
-        let particles = [];
-
-        function resizeBg() {
-            bgW = bgCanvas.width = window.innerWidth;
-            bgH = bgCanvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeBg);
-        resizeBg();
-
-        class CosmoParticle {
-            constructor() {
-                this.reset();
+        // --- GAME LOOPS ---
+        function loopAll() {
+            if(ac) {
+                drawGravity();
+                drawPendulums();
+                drawLightPrism(); // Nueva Exp 6
+                drawBubbles();
+                drawOrbits();
+                drawDoppler();
+                drawPainting();
             }
-            reset() {
-                this.x = Math.random() * bgW;
-                this.y = Math.random() * bgH;
-                this.size = Math.random() * 3;
-                this.speed = Math.random() * 2 + 0.5;
-                this.angle = Math.random() * Math.PI * 2;
-                this.hue = Math.random() * 360;
-                this.life = 0;
-            }
-            update() {
-                // Movimiento fluido tipo Perlin Noise simplificado
-                this.angle += (Math.random() - 0.5) * 0.2;
-                this.x += Math.cos(this.angle) * this.speed;
-                this.y += Math.sin(this.angle) * this.speed;
-                this.hue += 1;
-                this.life++;
+            requestAnimationFrame(loopAll);
+        }
 
-                // Interacción ratón
-                const dx = this.x - mouseX;
-                const dy = this.y - mouseY;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < 150) {
-                    this.angle = Math.atan2(dy, dx);
-                    this.speed = 5;
+        // 1. THEREMIN
+        const c1 = document.getElementById('c1');
+        const ctx1 = c1.getContext('2d');
+        let tOsc, tGain;
+        
+        c1.addEventListener('mouseenter', () => {
+            if(!ac || muteStates['s1']) return; // Check Mute
+            tOsc = ac.createOscillator();
+            tGain = ac.createGain();
+            tOsc.connect(tGain); tGain.connect(master);
+            tOsc.start();
+        });
+        c1.addEventListener('mouseleave', () => {
+            if(tOsc) { tOsc.stop(); tOsc = null; }
+        });
+        c1.addEventListener('mousemove', e => {
+            const r = c1.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            const y = e.clientY - r.top;
+            const freq = 200 + (x/c1.width)*800;
+            const vol = 1 - (y/c1.height);
+
+            if(tOsc) {
+                if(muteStates['s1']) {
+                    tGain.gain.setTargetAtTime(0, ac.currentTime, 0.1);
                 } else {
-                    this.speed = Math.max(0.5, this.speed * 0.98); // Friction
+                    tOsc.frequency.setTargetAtTime(freq, ac.currentTime, 0.1);
+                    tGain.gain.setTargetAtTime(vol, ac.currentTime, 0.1);
                 }
-
-                if (this.x < 0 || this.x > bgW || this.y < 0 || this.y > bgH || this.life > 400) this.reset();
+            } else if (!muteStates['s1'] && e.buttons > 0 && ac) {
+                 // Restart if re-entering while pressed (simplified logic handled by mouseenter)
             }
-            draw() {
-                bgCtx.fillStyle = `hsla(${this.hue}, 80%, 60%, 0.6)`;
-                bgCtx.beginPath();
-                bgCtx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-                bgCtx.fill();
-            }
-        }
-
-        for(let i=0; i<300; i++) particles.push(new CosmoParticle());
-
-        function animateBg() {
-            // No limpiar completamente para dejar estela suave
-            bgCtx.fillStyle = 'rgba(5, 0, 16, 0.05)'; 
-            if(document.body.classList.contains('night-mode')) bgCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             
-            bgCtx.fillRect(0, 0, bgW, bgH);
-
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
-            requestAnimationFrame(animateBg);
-        }
-        animateBg();
-
-
-        // --- 1. PAINT PSICODÉLICO ---
-        const pCanvas = document.getElementById('paint-canvas');
-        const pCtx = pCanvas.getContext('2d');
-        let painting = false;
-        let lastX = 0, lastY = 0;
-        let pHue = 0;
-        let kaleido = false;
-
-        function p_resize() {
-            // Evitar resetear el contenido al redimensionar si es posible, o guardar imagen
-        }
-        
-        pCanvas.addEventListener('mousedown', e => {
-            painting = true;
-            [lastX, lastY] = [e.offsetX, e.offsetY];
-        });
-        
-        pCanvas.addEventListener('mousemove', e => {
-            if(!painting) return;
-            const x = e.offsetX;
-            const y = e.offsetY;
-            const dist = Math.hypot(x - lastX, y - lastY);
-            const lineWidth = Math.max(2, 40 - dist); // Velocidad = grosor
-
-            pCtx.lineWidth = lineWidth;
-            pCtx.lineCap = 'round';
-            pCtx.strokeStyle = `hsl(${pHue}, 100%, 50%)`;
-            pCtx.shadowBlur = 10;
-            pCtx.shadowColor = pCtx.strokeStyle;
-
-            if (kaleido) {
-                const centerX = pCanvas.width / 2;
-                const centerY = pCanvas.height / 2;
-                const sides = 6;
-                const angleStep = (Math.PI * 2) / sides;
-                
-                pCtx.save();
-                pCtx.translate(centerX, centerY);
-                
-                for(let i=0; i<sides; i++) {
-                    pCtx.rotate(angleStep);
-                    pCtx.beginPath();
-                    // Ajustar coordenadas relativas al centro
-                    pCtx.moveTo(lastX - centerX, lastY - centerY);
-                    pCtx.lineTo(x - centerX, y - centerY);
-                    pCtx.stroke();
-                }
-                pCtx.restore();
-            } else {
-                pCtx.beginPath();
-                pCtx.moveTo(lastX, lastY);
-                pCtx.lineTo(x, y);
-                pCtx.stroke();
-            }
-
-            [lastX, lastY] = [x, y];
-            pHue+=2;
-            playSound('sine', 200 + (y/2), 0.05); // Sonido al pintar
+            ctx1.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx1.fillRect(0,0,600,300);
+            ctx1.fillStyle = `hsl(${freq/5}, 100%, 50%)`;
+            ctx1.beginPath(); ctx1.arc(x,y,20,0,Math.PI*2); ctx1.fill();
         });
 
-        window.addEventListener('mouseup', () => painting = false);
-
-        function p_clear() { pCtx.clearRect(0,0, pCanvas.width, pCanvas.height); }
+        // 2. SECUENCIADOR
+        const seqGrid = document.getElementById('sequencer');
+        let seqData = Array(4).fill(0).map(() => Array(8).fill(false)); // 4 tracks, 8 steps
+        let currentStep = 0;
         
-        function p_melt() {
-            // Copiar imagen, moverla un poco abajo con distorsión
-            const imageData = pCtx.getImageData(0, 0, pCanvas.width, pCanvas.height);
-            // Simulación simple: volver a dibujar con offset y ligera rotación
-            pCtx.globalAlpha = 0.9;
-            pCtx.drawImage(pCanvas, (Math.random()-0.5)*5, 2, pCanvas.width + (Math.random()-0.5)*5, pCanvas.height + 2);
-            pCtx.globalAlpha = 1.0;
-        }
-
-        function p_fracture() {
-            const w = pCanvas.width;
-            const h = pCanvas.height;
-            for(let i=0; i<10; i++) {
-                const x = Math.random() * w;
-                const y = Math.random() * h;
-                const sw = Math.random() * 100 + 50;
-                const sh = Math.random() * 100 + 50;
-                const dx = (Math.random() - 0.5) * 50;
-                const dy = (Math.random() - 0.5) * 50;
-                
-                // Extraer trozo y moverlo
-                const chunk = pCtx.getImageData(x, y, sw, sh);
-                pCtx.putImageData(chunk, x + dx, y + dy);
-                
-                // Dibujar bordes de fractura
-                pCtx.strokeStyle = 'white';
-                pCtx.strokeRect(x+dx, y+dy, sw, sh);
-            }
-        }
-
-        function p_toggleKaleido() {
-            kaleido = !kaleido;
-            document.getElementById('btn-kaleido').innerText = kaleido ? "🌀 Kaleido Mode: ON" : "🌀 Kaleido Mode: OFF";
-        }
-
-
-        // --- 6. ZONA FRACTAL INTERACTIVA ---
-        const fCanvas = document.getElementById('fractal-canvas');
-        const fCtx = fCanvas.getContext('2d');
-        let fTime = 0;
-
-        function drawFractal() {
-            const w = fCanvas.width;
-            const h = fCanvas.height;
-            // Limpieza con trail
-            fCtx.fillStyle = 'rgba(0,0,0,0.2)';
-            fCtx.fillRect(0,0,w,h);
-            
-            fCtx.save();
-            fCtx.translate(w/2, h/2);
-            
-            // Distorsión por mouse
-            const distM = (mouseX / window.innerWidth) * 2;
-            
-            for(let i=0; i<30; i++) {
-                fCtx.rotate(fTime * 0.0005 * (i%2==0 ? 1 : -1) + distM);
-                fCtx.beginPath();
-                const radius = 20 + i * 8 + Math.sin(fTime * 0.05 + i)*10;
-                
-                // Color cíclico
-                fCtx.strokeStyle = `hsl(${(fTime*2 + i*10)%360}, 100%, 50%)`;
-                fCtx.lineWidth = 2;
-                
-                // Dibujar forma (polígono rotante)
-                for(let j=0; j<6; j++) {
-                    const ang = (Math.PI*2/6) * j;
-                    const rx = Math.cos(ang) * radius;
-                    const ry = Math.sin(ang) * radius;
-                    if(j===0) fCtx.moveTo(rx, ry);
-                    else fCtx.lineTo(rx, ry);
-                }
-                fCtx.closePath();
-                fCtx.stroke();
-            }
-            fCtx.restore();
-            
-            fTime++;
-            requestAnimationFrame(drawFractal);
-        }
-        drawFractal();
-
-
-        // --- 4. JUEGO ARTE VIVO XL (COLLAGE ANIMADO) ---
-        const gameArea = document.getElementById('game-area');
-        let entities = [];
-
-        class Entity {
-            constructor(x, y) {
-                this.element = document.createElement('div');
-                this.element.classList.add('game-entity');
-                this.w = Math.random() * 80 + 30;
-                this.h = this.w;
-                this.element.style.width = this.w + 'px';
-                this.element.style.height = this.h + 'px';
-                
-                // Estilo aleatorio
-                this.type = Math.floor(Math.random()*4);
-                if(this.type === 0) this.element.style.borderRadius = '50%';
-                else if(this.type === 2) this.element.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
-                else if(this.type === 3) this.element.style.borderRadius = '50% 20% / 10% 40%';
-                
-                this.color = `hsl(${Math.random()*360}, 100%, 50%)`;
-                this.element.style.backgroundColor = this.color;
-                
-                // Física
-                this.x = x || Math.random() * (gameArea.clientWidth - this.w);
-                this.y = y || Math.random() * (gameArea.clientHeight - this.h);
-                this.vx = (Math.random() - 0.5) * 4;
-                this.vy = (Math.random() - 0.5) * 4;
-                
-                // Eventos
-                this.isDragging = false;
-                this.element.addEventListener('mousedown', (e) => this.dragStart(e));
-                this.element.addEventListener('dblclick', (e) => this.mutate(e));
-                
-                gameArea.appendChild(this.element);
-                entities.push(this);
-            }
-
-            update() {
-                if(this.isDragging) return;
-
-                this.x += this.vx;
-                this.y += this.vy;
-                
-                // Rebote
-                if(this.x <= 0 || this.x >= gameArea.clientWidth - this.w) {
-                    this.vx *= -1;
-                    playSound('square', 100, 0.1);
-                }
-                if(this.y <= 0 || this.y >= gameArea.clientHeight - this.h) {
-                    this.vy *= -1;
-                    playSound('square', 100, 0.1);
-                }
-                
-                this.element.style.left = this.x + 'px';
-                this.element.style.top = this.y + 'px';
-                this.element.style.transform = `rotate(${this.x}deg)`;
-            }
-
-            dragStart(e) {
-                e.stopPropagation();
-                // Si se presiona sin arrastrar, es un clic para clonar
-                let startX = e.clientX;
-                let startY = e.clientY;
-                this.isDragging = true;
-                
-                const onMove = (mv) => {
-                    // Arrastrar
-                    const rect = gameArea.getBoundingClientRect();
-                    this.x = mv.clientX - rect.left - this.w/2;
-                    this.y = mv.clientY - rect.top - this.h/2;
-                    this.element.style.left = this.x + 'px';
-                    this.element.style.top = this.y + 'px';
-                    // Resetear velocidad al soltar para "lanzar"
-                    this.vx = (mv.movementX || 0);
-                    this.vy = (mv.movementY || 0);
+        for(let r=0; r<4; r++) {
+            let row = document.createElement('div');
+            row.className = 'seq-row';
+            for(let c=0; c<8; c++) {
+                let cell = document.createElement('div');
+                cell.className = 'seq-cell';
+                cell.id = `seq-${r}-${c}`;
+                cell.onclick = () => { 
+                    seqData[r][c] = !seqData[r][c]; 
+                    cell.classList.toggle('active'); 
                 };
-
-                const onUp = (up) => {
-                    this.isDragging = false;
-                    window.removeEventListener('mousemove', onMove);
-                    window.removeEventListener('mouseup', onUp);
+                row.appendChild(cell);
+            }
+            seqGrid.appendChild(row);
+        }
+        
+        function startSequencer() {
+            setInterval(() => {
+                if(!ac) return;
+                // Visual
+                for(let r=0; r<4; r++) {
+                    document.getElementById(`seq-${r}-${(currentStep-1+8)%8}`).classList.remove('playing');
+                    document.getElementById(`seq-${r}-${currentStep}`).classList.add('playing');
                     
-                    // Si apenas se movió, clonar
-                    if(Math.hypot(up.clientX - startX, up.clientY - startY) < 5) {
-                        new Entity(this.x + 20, this.y + 20);
-                        playSound('sine', 600, 0.1);
+                    if(seqData[r][currentStep] && !muteStates['s2']) { // Check Mute
+                        // Play sounds (Kick, Snare, Hihat, Synth)
+                        if(r==0) playOsc(150, 'sine', 0.1, 0.8); // Kick-ish
+                        if(r==1) playNoiseEnv(0.1); // Snare-ish
+                        if(r==2) playOsc(8000, 'square', 0.05, 0.1); // Hihat
+                        if(r==3) playOsc(scale[Math.floor(Math.random()*5)]*2, 'triangle', 0.2); // Melody
                     }
-                };
-
-                window.addEventListener('mousemove', onMove);
-                window.addEventListener('mouseup', onUp);
-            }
-
-            mutate(e) {
-                e.stopPropagation();
-                this.element.style.filter = "invert(1) blur(2px) contrast(2)";
-                this.element.style.transform += " scale(1.5) rotate(45deg)";
-                this.vx = 0; this.vy = 0; // Freeze effect
-                playSound('sawtooth', 50, 0.5);
-            }
-        }
-
-        // Loop del juego
-        function gameLoop() {
-            entities.forEach(e => e.update());
-            requestAnimationFrame(gameLoop);
-        }
-        
-        // Iniciar con 6 entidades
-        for(let i=0; i<6; i++) new Entity();
-        gameLoop();
-
-
-        // --- 5. GENERADOR MUTANTE ---
-        const gCanvas = document.getElementById('gen-canvas');
-        const gCtx = gCanvas.getContext('2d');
-        let hypnoMode = false;
-        let hypnoAngle = 0;
-
-        function g_generate() {
-            // Reset transforms
-            gCtx.setTransform(1, 0, 0, 1, 0, 0);
-            gCtx.clearRect(0,0,500,500);
-            
-            // Background aleatorio
-            gCtx.fillStyle = `hsl(${Math.random()*360}, 50%, 10%)`;
-            gCtx.fillRect(0,0,500,500);
-
-            const shapes = Math.floor(Math.random() * 20) + 10;
-            
-            for(let i=0; i<shapes; i++) {
-                gCtx.fillStyle = `hsla(${Math.random()*360}, 100%, 50%, ${Math.random()})`;
-                gCtx.beginPath();
-                const type = Math.random();
-                const x = Math.random() * 500;
-                const y = Math.random() * 500;
-                const s = Math.random() * 100;
-
-                if(type < 0.33) gCtx.arc(x,y, s, 0, Math.PI*2);
-                else if(type < 0.66) gCtx.fillRect(x, y, s, s);
-                else {
-                    gCtx.moveTo(x, y);
-                    gCtx.lineTo(x+s, y+s);
-                    gCtx.lineTo(x-s, y+s);
                 }
-                gCtx.fill();
-            }
-            
-            // Efecto Glitch visual (líneas scan)
-            for(let i=0; i<500; i+=4) {
-                gCtx.fillStyle = "rgba(0,0,0,0.2)";
-                gCtx.fillRect(0, i, 500, 1);
-            }
-
-            playSound('sawtooth', 200 + Math.random()*800, 0.3);
+                currentStep = (currentStep + 1) % 8;
+            }, 250);
+        }
+        function playNoiseEnv(dur) {
+            if(!ac) return;
+            const buf = ac.createBuffer(1, ac.sampleRate*dur, ac.sampleRate);
+            const d = buf.getChannelData(0);
+            for(let i=0; i<d.length; i++) d[i] = Math.random()*2-1;
+            const n = ac.createBufferSource(); n.buffer = buf;
+            const g = ac.createGain(); g.gain.value = 0.2; g.gain.exponentialRampToValueAtTime(0.01, ac.currentTime+dur);
+            n.connect(g); g.connect(master); n.start();
+        }
+        function clearSeq() {
+            seqData = seqData.map(r => r.fill(false));
+            document.querySelectorAll('.seq-cell').forEach(c => c.classList.remove('active'));
         }
 
-        function g_toggleHypno() {
-            hypnoMode = !hypnoMode;
-            document.getElementById('btn-hypno').innerText = hypnoMode ? "😵 Hipnosis: ON" : "😵 Hipnosis: OFF";
-            if(hypnoMode) animateHypno();
-        }
-
-        function animateHypno() {
-            if(!hypnoMode) return;
-            // Capturar el canvas actual, rotarlo y redibujarlo con zoom in/out
-            const temp = document.createElement('canvas');
-            temp.width = 500; temp.height = 500;
-            temp.getContext('2d').drawImage(gCanvas, 0, 0);
-
-            gCtx.clearRect(0,0,500,500);
-            gCtx.save();
-            gCtx.translate(250, 250);
-            gCtx.rotate(0.02);
-            gCtx.scale(1.01, 1.01); // Zoom infinito lento
-            gCtx.translate(-250, -250);
-            gCtx.drawImage(temp, 0, 0);
-            
-            // Ciclo de color global
-            gCtx.globalCompositeOperation = 'source-atop';
-            gCtx.fillStyle = `hsla(${hypnoAngle%360}, 100%, 50%, 0.01)`;
-            gCtx.fillRect(0,0,500,500);
-            gCtx.globalCompositeOperation = 'source-over';
-            
-            gCtx.restore();
-            
-            hypnoAngle++;
-            if(hypnoMode) requestAnimationFrame(animateHypno);
-        }
-        g_generate();
-
-
-        // --- 7. GALERÍA DE ESTILOS ---
-        function cubismEffect(el) {
-            el.style.clipPath = `polygon(${Math.random()*30}% 0, 100% ${Math.random()*30}%, ${100-Math.random()*30}% 100%, 0 ${100-Math.random()*30}%)`;
-            el.style.transform = `translate(${Math.random()*10-5}px, ${Math.random()*10-5}px)`;
-        }
-        function resetStyle(el) {
-            el.style.clipPath = 'polygon(0 0, 100% 0, 100% 100%, 0 100%)';
-            el.style.transform = 'none';
-        }
+        // 3. GRAVEDAD
+        const c3 = document.getElementById('c3');
+        const ctx3 = c3.getContext('2d');
+        let balls = [];
         
-        function surrealMelt(el) {
-            el.style.transition = '2s';
-            el.style.borderRadius = '40% 60% 70% 30% / 40% 50% 60% 50%';
-            el.style.transform = 'scaleY(1.2) rotate(10deg)';
-            el.style.filter = 'hue-rotate(180deg) blur(2px)';
+        c3.addEventListener('mousedown', e => {
+            const r = c3.getBoundingClientRect();
+            balls.push({
+                x: e.clientX - r.left, y: e.clientY - r.top,
+                vx: (Math.random()-0.5)*10, vy: 0,
+                col: `hsl(${Math.random()*360},100%,50%)`
+            });
+        });
+        
+        function drawGravity() {
+            ctx3.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx3.fillRect(0,0,600,300);
+            balls.forEach(b => {
+                b.vy += 0.5; b.x += b.vx; b.y += b.vy;
+                if(b.y > 290) { 
+                    b.y = 290; b.vy *= -0.8; 
+                    if(Math.abs(b.vy) > 1 && !muteStates['s3']) playOsc(200 + b.x, 'sine', 0.1);
+                }
+                if(b.x < 0 || b.x > 600) { 
+                    b.vx *= -1; 
+                    if(!muteStates['s3']) playOsc(800 - b.x, 'triangle', 0.1); 
+                }
+                ctx3.fillStyle = b.col;
+                ctx3.beginPath(); ctx3.arc(b.x, b.y, 10, 0, Math.PI*2); ctx3.fill();
+            });
         }
 
-        function popExplode(el) {
-            playSound('square', 150, 0.1);
-            // Crear partículas DOM
+        // 4. ARPA LÁSER
+        const c4 = document.getElementById('c4');
+        const ctx4 = c4.getContext('2d');
+        // Dibujar cuerdas estáticas
+        function drawHarp() {
+            ctx4.clearRect(0,0,600,300);
             for(let i=0; i<10; i++) {
-                const p = document.createElement('div');
-                p.style.position = 'absolute';
-                p.style.left = el.offsetLeft + el.offsetWidth/2 + 'px';
-                p.style.top = el.offsetTop + el.offsetHeight/2 + 'px';
-                p.style.width = '20px'; p.style.height = '20px';
-                p.style.background = ['red', 'yellow', 'blue'][Math.floor(Math.random()*3)];
-                p.style.borderRadius = '50%';
-                p.style.zIndex = 100;
-                p.style.transition = '1s';
-                document.body.appendChild(p);
-                
-                setTimeout(() => {
-                    p.style.transform = `translate(${(Math.random()-0.5)*300}px, ${(Math.random()-0.5)*300}px) scale(0)`;
-                }, 10);
-                setTimeout(() => p.remove(), 1000);
+                ctx4.strokeStyle = `hsl(${i*36}, 100%, 50%)`;
+                ctx4.lineWidth = 2;
+                ctx4.beginPath(); ctx4.moveTo(50 + i*50, 0); ctx4.lineTo(50 + i*50, 300); ctx4.stroke();
             }
         }
-
-        // --- ABSTRACTO CÓSMICO (PARTICULAS DENTRO DE DIV) ---
-        const absBox = document.getElementById('abstract-container');
-        absBox.addEventListener('mousemove', (e) => {
-             const d = document.createElement('div');
-             d.style.width = '10px'; d.style.height = '10px';
-             d.style.background = 'white';
-             d.style.position = 'absolute';
-             d.style.left = (e.clientX - absBox.getBoundingClientRect().left) + 'px';
-             d.style.top = (e.clientY - absBox.getBoundingClientRect().top) + 'px';
-             d.style.borderRadius = '50%';
-             d.style.animation = 'fadeOut 1s forwards';
-             absBox.appendChild(d);
-             setTimeout(()=>d.remove(), 1000);
+        drawHarp();
+        
+        let lastString = -1;
+        c4.addEventListener('mousemove', e => {
+            const r = c4.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            const strIdx = Math.floor((x - 25) / 50);
+            
+            if(strIdx >= 0 && strIdx < 10 && strIdx !== lastString) {
+                // Pluck
+                if(!muteStates['s4']) playOsc(scale[strIdx] || 440, 'sawtooth', 0.5, 0.2);
+                // Visual feedback
+                ctx4.fillStyle = 'white';
+                ctx4.fillRect(50 + strIdx*50 - 2, 0, 4, 300);
+                setTimeout(drawHarp, 100);
+                lastString = strIdx;
+            } else if (strIdx < 0 || strIdx >= 10) {
+                lastString = -1;
+            }
         });
 
+        // 5. PÉNDULOS
+        const c5 = document.getElementById('c5');
+        const ctx5 = c5.getContext('2d');
+        let pTime = 0;
+        
+        function drawPendulums() {
+            ctx5.clearRect(0,0,600,300);
+            pTime += 0.01;
+            
+            for(let i=0; i<8; i++) {
+                const len = 100 + i*20;
+                const freq = 1 + i*0.1;
+                const angle = Math.sin(pTime * freq) * 1; // Oscilación
+                const x = 300 + Math.sin(angle) * len;
+                const y = Math.cos(angle) * len;
+                
+                ctx5.strokeStyle = 'white';
+                ctx5.beginPath(); ctx5.moveTo(300, 0); ctx5.lineTo(x, y); ctx5.stroke();
+                ctx5.beginPath(); ctx5.arc(x, y, 10, 0, Math.PI*2); ctx5.fillStyle = `hsl(${i*40},100%,50%)`; ctx5.fill();
+                
+                // Trigger en extremos
+                if (Math.abs(Math.sin((pTime-0.01)*freq)) < 0.99 && Math.abs(Math.sin(pTime*freq)) >= 0.99) {
+                    if(!muteStates['s5']) playOsc(scale[i]*2, 'triangle', 0.2, 0.1, (x-300)/300);
+                }
+            }
+        }
+        function resetPendulums() { pTime = 0; }
 
-        // --- 8. POESÍA DINÁMICA ---
-        const poems = [
-            "Tus ojos son fractales de un universo olvidado.",
-            "El tiempo se derrite como cera sobre la memoria.",
-            "Respiramos colores, exhalamos sombras.",
-            "La gravedad es solo una sugerencia de la mente.",
-            "Somos polvo de estrellas soñando que somos humanos.",
-            "El arte es la mentira que nos hace ver la verdad.",
-            "Cada trazo es un suspiro del universo."
+        // 6. PRISMA DE LUZ (REEMPLAZO DE LLUVIA)
+        const c6 = document.getElementById('c6');
+        const ctx6 = c6.getContext('2d');
+        let rays = [];
+
+        c6.addEventListener('mousemove', e => {
+            if(muteStates['s6']) return;
+            const r = c6.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            const y = e.clientY - r.top;
+            
+            rays.push({x: x, y: y, age: 0, hue: (x/600)*360});
+            
+            // Sonido cristalino basado en altura
+            if(Math.random() > 0.6) {
+                playOsc(800 - y, 'sine', 0.1, 0.1);
+            }
+        });
+
+        function drawLightPrism() {
+            ctx6.fillStyle = 'rgba(0,0,0,0.1)'; 
+            ctx6.fillRect(0,0,600,300);
+            
+            ctx6.lineWidth = 2;
+            
+            for(let i=0; i<rays.length; i++) {
+                let p = rays[i];
+                p.age++;
+                ctx6.strokeStyle = `hsla(${p.hue}, 100%, 50%, ${(50-p.age)/50})`;
+                ctx6.beginPath();
+                ctx6.moveTo(p.x, p.y);
+                // Conectar con punto random cercano para efecto "rayo"
+                ctx6.lineTo(p.x + (Math.random()-0.5)*50, p.y + (Math.random()-0.5)*50);
+                ctx6.stroke();
+                
+                if(p.age > 30) {
+                    rays.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        // 7. VOCALES
+        const c7 = document.getElementById('c7');
+        const ctx7 = c7.getContext('2d');
+        let vOsc;
+        
+        // Simulación simple de vocales usando frecuencia y filtro
+        // X = vowel selection (Low pass filter freq), Y = Pitch
+        c7.addEventListener('mouseenter', () => {
+            if(!ac || muteStates['s7']) return;
+            vOsc = ac.createOscillator();
+            vOsc.type = 'sawtooth';
+            // Crear filtro para simular formantes
+            const f = ac.createBiquadFilter();
+            f.type = 'bandpass';
+            f.Q.value = 10;
+            vOsc.connect(f);
+            f.connect(master);
+            vOsc.start();
+            c7.filterNode = f;
+        });
+        c7.addEventListener('mouseleave', () => { if(vOsc) { vOsc.stop(); vOsc = null; } });
+        c7.addEventListener('mousemove', e => {
+            const r = c7.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            const y = e.clientY - r.top;
+            
+            if(muteStates['s7']) {
+                if(vOsc) { vOsc.stop(); vOsc = null; }
+            } else {
+                if(!vOsc && ac && e.buttons) { /* Restart logic could be here */ }
+                if(vOsc) {
+                    vOsc.frequency.value = 100 + (300 - y); // Pitch
+                    c7.filterNode.frequency.value = 200 + x * 5; // Vowel "color"
+                }
+            }
+            
+            // Visual
+            ctx7.clearRect(0,0,300,300);
+            ctx7.beginPath(); ctx7.arc(x,y,20,0,Math.PI*2);
+            ctx7.fillStyle = 'white'; ctx7.fill();
+            ctx7.font = "20px monospace"; ctx7.fillText("A E I O U", 100, 150);
+        });
+
+        // 8. BURBUJAS
+        const c8 = document.getElementById('c8');
+        const ctx8 = c8.getContext('2d');
+        let bubbles = [];
+        
+        c8.addEventListener('mousedown', e => {
+            const r = c8.getBoundingClientRect();
+            bubbles.push({
+                x: e.clientX - r.left, y: e.clientY - r.top,
+                r: 0, maxR: Math.random()*30+20,
+                freq: 200 + Math.random()*800
+            });
+            // FM Pop sound
+            if(!muteStates['s8']) {
+                const o = ac.createOscillator();
+                const m = ac.createOscillator();
+                const g = ac.createGain();
+                m.frequency.value = 50; 
+                m.connect(o.frequency);
+                o.connect(g); g.connect(master);
+                o.frequency.setValueAtTime(200, ac.currentTime);
+                o.frequency.exponentialRampToValueAtTime(800, ac.currentTime+0.1);
+                g.gain.exponentialRampToValueAtTime(0.01, ac.currentTime+0.1);
+                o.start(); m.start();
+                o.stop(ac.currentTime+0.1); m.stop(ac.currentTime+0.1);
+            }
+        });
+        
+        function drawBubbles() {
+            ctx8.clearRect(0,0,600,300);
+            bubbles.forEach((b, i) => {
+                b.y -= 1; b.r += 0.5;
+                ctx8.strokeStyle = `hsl(${b.freq/5}, 100%, 50%)`;
+                ctx8.beginPath(); ctx8.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx8.stroke();
+                if(b.r > b.maxR) bubbles.splice(i, 1);
+            });
+        }
+
+        // 9. ECOS
+        const c9 = document.getElementById('c9');
+        const ctx9 = c9.getContext('2d');
+        // Simple visualizer for delay concepts (click creates circles)
+        let echoes = [];
+        c9.addEventListener('mousedown', e => {
+            const r = c9.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            
+            // Create audio echo
+            if(!muteStates['s9']) {
+                const osc = ac.createOscillator();
+                const gain = ac.createGain();
+                const delay = ac.createDelay();
+                const feedback = ac.createGain();
+                
+                delay.delayTime.value = 0.3;
+                feedback.gain.value = 0.6;
+                
+                osc.frequency.value = 200 + x;
+                osc.type = 'triangle';
+                
+                osc.connect(gain);
+                gain.connect(master);
+                gain.connect(delay);
+                delay.connect(feedback);
+                feedback.connect(delay);
+                feedback.connect(master);
+                
+                gain.gain.setValueAtTime(0.5, ac.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ac.currentTime + 0.1);
+                
+                osc.start(); osc.stop(ac.currentTime + 0.1);
+            }
+            
+            // Visual echo
+            echoes.push({x: x, y: e.clientY-r.top, r: 0});
+        });
+        
+        // Loop echo visuals in loopAll() or here?
+        // We'll add to main loop for simplicity, but defining separate draw function
+        c9.draw = function() { // Attach to obj to keep clean
+            ctx9.fillStyle = 'rgba(0,0,0,0.1)'; ctx9.fillRect(0,0,600,300);
+            echoes.forEach((e, i) => {
+                e.r += 2;
+                ctx9.strokeStyle = 'white';
+                ctx9.beginPath(); ctx9.arc(e.x, e.y, e.r, 0, Math.PI*2); ctx9.stroke();
+                if(e.r > 300) echoes.splice(i, 1);
+            });
+        };
+        // Hook into loopAll
+        const oldLoop = loopAll;
+        loopAll = function() {
+            // Updated Loop
+            if(ac) {
+                drawGravity();
+                drawPendulums();
+                drawLightPrism();
+                drawBubbles();
+                c9.draw(); // Ecos
+                drawString(); // Cuerda (Modified below)
+                drawOrbits();
+                drawDoppler();
+                drawPainting();
+            }
+            requestAnimationFrame(loopAll);
+        }
+
+        // 10. CUERDA TENSA (MEJORADA CON COLOR VIBRANTE)
+        const c10 = document.getElementById('c10');
+        const ctx10 = c10.getContext('2d');
+        let stringY = 100;
+        let stringVel = 0;
+        let isDraggingStr = false;
+        
+        c10.addEventListener('mousedown', e => {
+            const r = c10.getBoundingClientRect();
+            if(Math.abs(e.clientY - r.top - 100) < 20) isDraggingStr = true;
+        });
+        window.addEventListener('mouseup', () => {
+            if(isDraggingStr) {
+                isDraggingStr = false;
+                // Pluck sound
+                if(!muteStates['s10']) playOsc(110, 'sawtooth', 1.0);
+            }
+        });
+        c10.addEventListener('mousemove', e => {
+            if(isDraggingStr) {
+                const r = c10.getBoundingClientRect();
+                stringY = e.clientY - r.top;
+            }
+        });
+        
+        function drawString() { 
+            ctx10.clearRect(0,0,600,200);
+            
+            if(!isDraggingStr) {
+                const force = (100 - stringY) * 0.1;
+                stringVel += force;
+                stringVel *= 0.95; 
+                stringY += stringVel;
+            }
+            
+            // Color Logic based on vibration intensity
+            const vib = Math.abs(stringY - 100);
+            ctx10.lineWidth = 3 + vib/10;
+            
+            if(vib > 1) {
+                // Vibrando: Colores RGB
+                const hue = (Date.now() / 2) % 360; 
+                ctx10.strokeStyle = `hsl(${hue}, 100%, 70%)`;
+                ctx10.shadowBlur = vib + 5;
+                ctx10.shadowColor = `hsl(${hue}, 100%, 50%)`;
+            } else {
+                // Quieta
+                ctx10.strokeStyle = 'var(--neon-pink)';
+                ctx10.shadowBlur = 0;
+            }
+            
+            ctx10.beginPath();
+            ctx10.moveTo(0, 100);
+            ctx10.quadraticCurveTo(300, stringY, 600, 100);
+            ctx10.stroke();
+            
+            // Reset context shadow for safety
+            ctx10.shadowBlur = 0;
+        }
+
+        // 11. ORBITAS
+        const c11 = document.getElementById('c11');
+        const ctx11 = c11.getContext('2d');
+        let planets = [
+            {r: 50, s: 0.02, a: 0, note: scale[0]},
+            {r: 100, s: 0.015, a: 0, note: scale[2]},
+            {r: 150, s: 0.01, a: 0, note: scale[4]}
         ];
         
-        function newPoem() {
-            const pText = document.getElementById('poem-display');
-            pText.classList.remove('poetry-visible');
+        function drawOrbits() {
+            ctx11.fillStyle = 'rgba(0,0,0,0.1)'; ctx11.fillRect(0,0,400,400);
+            ctx11.translate(200, 200);
             
-            setTimeout(() => {
-                pText.innerText = poems[Math.floor(Math.random() * poems.length)];
-                pText.classList.add('poetry-visible');
-                playSound('sine', 440, 0.5); // Sonido de revelación
-            }, 1000);
+            // Horizon line
+            ctx11.strokeStyle = '#333'; ctx11.beginPath(); ctx11.moveTo(-200,0); ctx11.lineTo(200,0); ctx11.stroke();
+            
+            planets.forEach(p => {
+                p.a += p.s;
+                const x = Math.cos(p.a) * p.r;
+                const y = Math.sin(p.a) * p.r;
+                
+                // Sound trigger on crossing Y axis
+                if(Math.abs(y) < 2) {
+                    ctx11.fillStyle = 'white';
+                    if(!muteStates['s11']) playOsc(p.note, 'sine', 0.2, 0.1);
+                } else {
+                    ctx11.fillStyle = 'var(--neon-cyan)';
+                }
+                
+                ctx11.beginPath(); ctx11.arc(x, y, 5, 0, Math.PI*2); ctx11.fill();
+            });
+            ctx11.translate(-200, -200);
         }
-        // Init
-        setTimeout(() => document.getElementById('poem-display').classList.add('poetry-visible'), 500);
 
-
-        // --- UTILIDADES GLOBALES ---
-        function toggleNightMode() {
-            document.body.classList.toggle('night-mode');
+        // 12. RADIO
+        const c12 = document.getElementById('c12');
+        const ctx12 = c12.getContext('2d');
+        let noiseNode, radioGain;
+        
+        // Create noise once
+        function initRadio() {
+            if(!ac || noiseNode) return;
+            const size = ac.sampleRate * 2;
+            const b = ac.createBuffer(1, size, ac.sampleRate);
+            const d = b.getChannelData(0);
+            for(let i=0; i<size; i++) d[i] = Math.random()*2-1;
+            noiseNode = ac.createBufferSource();
+            noiseNode.buffer = b;
+            noiseNode.loop = true;
+            radioGain = ac.createGain();
+            radioGain.gain.value = 0;
+            noiseNode.connect(radioGain);
+            radioGain.connect(master);
+            noiseNode.start();
         }
-   
+        
+        c12.addEventListener('mouseenter', initRadio);
+        c12.addEventListener('mousemove', e => {
+            if(!radioGain) return;
+            const r = c12.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            
+            // Stations at 100, 300, 500
+            const stations = [100, 300, 500];
+            let signal = 0;
+            let tuning = 0;
+            
+            stations.forEach(s => {
+                const dist = Math.abs(x - s);
+                if(dist < 20) {
+                    tuning = 1 - (dist/20);
+                    signal = 1; // Found station
+                }
+            });
+            
+            // Mix noise and signal
+            if (muteStates['s12']) {
+                radioGain.gain.value = 0;
+            } else {
+                radioGain.gain.value = (1 - tuning) * 0.2; // More noise if far
+                
+                if(tuning > 0.1 && Math.random() < 0.1) {
+                    // Play sine blip if tuned
+                    playOsc(1000 * tuning, 'sine', 0.05, tuning*0.5);
+                }
+            }
+            
+            // Visual
+            ctx12.fillStyle = 'black'; ctx12.fillRect(0,0,600,150);
+            ctx12.fillStyle = 'red'; ctx12.fillRect(x, 0, 2, 150);
+            
+            // Static visual
+            for(let i=0; i<50; i++) {
+                ctx12.fillStyle = 'white';
+                ctx12.fillRect(Math.random()*600, Math.random()*150, 2, 2);
+            }
+            if(tuning > 0.5) {
+                ctx12.font = "30px monospace";
+                ctx12.fillStyle = "var(--neon-lime)";
+                ctx12.fillText("SIGNAL FOUND", 200, 80);
+            }
+        });
+        c12.addEventListener('mouseleave', () => { if(radioGain) radioGain.gain.value = 0; });
+
+        // 13. GLITCH GRID
+        const gGrid = document.getElementById('glitch-grid');
+        for(let i=0; i<20; i++) {
+            let d = document.createElement('div');
+            d.style.backgroundColor = '#222';
+            d.style.border = '1px solid #333';
+            d.onmouseenter = function() {
+                this.style.backgroundColor = 'white';
+                setTimeout(()=>this.style.backgroundColor='#222', 100);
+                if(!muteStates['s13']) {
+                    playNoiseEnv(Math.random()*0.1);
+                    if(Math.random()>0.5) playOsc(Math.random()*2000, 'sawtooth', 0.05);
+                }
+            };
+            gGrid.appendChild(d);
+        }
+
+        // 14. DOPPLER
+        const c14 = document.getElementById('c14');
+        const ctx14 = c14.getContext('2d');
+        let dObj = {x: -50, v: 5};
+        
+        function drawDoppler() {
+            ctx14.clearRect(0,0,600,300);
+            dObj.x += dObj.v;
+            if(dObj.x > 650) dObj.x = -50;
+            
+            // Visual car
+            ctx14.fillStyle = 'var(--neon-red)';
+            ctx14.fillRect(dObj.x, 140, 40, 20);
+            
+            // Listener in center
+            ctx14.fillStyle = 'white';
+            ctx14.beginPath(); ctx14.arc(300, 150, 5, 0, Math.PI*2); ctx14.fill();
+            
+            // Audio logic on pass
+            // Simple volume/pitch sim
+            const dist = dObj.x - 300;
+            if(Math.abs(dist) < 300 && Math.abs(dist) % 20 < 5 && !muteStates['s14']) {
+                // Play pulse
+                // Pitch higher when approaching (-dist), lower when leaving (+dist)
+                let pitch = 400;
+                if(dist < 0) pitch = 500; // Coming
+                else pitch = 300; // Going
+                
+                // Pan
+                const pan = dist / 300;
+                playOsc(pitch, 'sawtooth', 0.05, 0.1, pan);
+            }
+        }
+
+        // 15. PINTURA SONORA
+        const c15 = document.getElementById('c15');
+        const ctx15 = c15.getContext('2d');
+        let isPainting = false;
+        
+        c15.addEventListener('mousedown', () => isPainting=true);
+        window.addEventListener('mouseup', () => isPainting=false);
+        c15.addEventListener('mousemove', e => {
+            if(!isPainting) return;
+            const r = c15.getBoundingClientRect();
+            const x = e.clientX - r.left;
+            const y = e.clientY - r.top;
+            
+            const hue = (x/600) * 360;
+            ctx15.fillStyle = `hsl(${hue}, 100%, 50%)`;
+            ctx15.beginPath(); ctx15.arc(x,y,10,0,Math.PI*2); ctx15.fill();
+            
+            // Play freq based on Y
+            if(!muteStates['s15']) {
+                const freq = 1000 - (y/300)*800;
+                playOsc(freq, 'sine', 0.1);
+            }
+        });
+        
+        function drawPainting() {
+            // Fade out
+            ctx15.fillStyle = 'rgba(0,0,0,0.02)';
+            ctx15.fillRect(0,0,600,300);
+        }
+        function clearCanvas15() { ctx15.clearRect(0,0,600,300); }
+
     </script>
 </body>
-
 </html>
