@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arte Psicodélico - Experiencia Interactiva</title>
+    <style>
+        /* --- ESTÉTICA GENERAL Y VARIABLES --- */
+        :root {
+            --acid-green: #ccff00;
+            --acid-pink: #ff0099;
+            --acid-cyan: #00ffff;
+            --acid-purple: #9d00ff;
+            --acid-orange: #ff6600;
+            --bg-deep: #050010;
+            --cursor-size: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            /* cursor: none; <-- ELIMINADO: Restauramos el cursor nativo globalmente */
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-deep);
+            color: white;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            perspective: 1000px; /* Para el efecto 3D global */
+            transition: background-color 0.5s, filter 0.1s;
+            cursor: default; /* Cursor por defecto para la navegación */
+        }
+
+        body.night-mode {
+            --bg-deep: #000000;
+            filter: invert(1) hue-rotate(180deg);
+        }
+
+        /* --- CURSOR PERSONALIZADO (Ahora es un acompañante visual) --- */
+        #custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--cursor-size);
+            height: var(--cursor-size);
+            border: 2px solid white;
+            border-radius: 50%;
+            pointer-events: none; /* Permite hacer clic a través de él */
+            z-index: 9999;
+            mix-blend-mode: difference;
+            transition: transform 0.1s;
+            box-shadow: 0 0 10px white;
+            /* Opcional: hacerlo un poco transparente para que no estorbe */
+            opacity: 0.8;
+        }
+        
+        .cursor-trail {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--acid-pink);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.7;
+            animation: fadeOut 0.5s forwards;
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: scale(0); }
+        }
+
+        /* --- FONDO VIVO --- */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            filter: blur(2px) contrast(1.5);
+        }
+
+        /* --- CONTENEDOR 3D (REALIDAD DOBLEGADA) --- */
+        #world-wrapper {
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            will-change: transform;
+        }
+
+        /* --- SECCIONES Y TIPOGRAFÍA --- */
+        section {
+            min-height: 100vh;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+
+        h1 {
+            font-size: 5rem;
+            text-transform: uppercase;
+            text-align: center;
+            animation: glitch-text 3s infinite;
+            text-shadow: 4px 4px 0px var(--acid-purple);
+            mix-blend-mode: screen;
+            line-height: 0.9;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            color: var(--acid-cyan);
+            text-shadow: 0 0 10px var(--acid-cyan);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+        
+        p.poetic-desc {
+            font-size: 1.2rem;
+            max-width: 600px;
+            text-align: center;
+            opacity: 0.8;
+            font-style: italic;
+            margin-bottom: 30px;
+            color: #ddd;
+        }
+
+        button {
+            background: transparent;
+            color: white;
+            border: 2px solid var(--acid-green);
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-family: inherit;
+            margin: 10px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(204, 255, 0, 0.2);
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--acid-green);
+            color: black;
+            box-shadow: 0 0 30px var(--acid-green);
+            transform: scale(1.1) rotate(-2deg);
+        }
+
+        button:active {
+            transform: scale(0.9);
+        }
+
+        /* --- 1. PAINT PSICODÉLICO --- */
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(255, 0, 153, 0.3);
+            border: 4px double var(--acid-pink);
+            /* Ocultamos cursor nativo SOLO DENTRO del área de dibujo */
+            cursor: none; 
+        }
+        #paint-canvas { background: #000; }
+
+        /* --- 4. JUEGO ARTE VIVO XL --- */
+        #game-area {
+            width: 90%;
+            height: 70vh;
+            border: 2px dashed var(--acid-cyan);
+            position: relative;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+            /* Ocultamos cursor nativo SOLO DENTRO del juego */
+            cursor: none;
+        }
+
+        .game-entity {
+            position: absolute;
+            transition: filter 0.3s;
+            mix-blend-mode: hard-light;
+            cursor: grab;
+        }
+        .game-entity:hover { filter: brightness(1.5) hue-rotate(90deg); }
+        .game-entity:active { cursor: grabbing; }
+
+        /* --- 7. GALERÍA DE ESTILOS --- */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        
+        .style-box {
+            height: 250px;
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            transition: 0.5s;
+            cursor: pointer; /* Cursor de mano para indicar interacción */
+        }
+
+        /* Estilos específicos de galería */
+        .cubism-box { background: linear-gradient(135deg, #f09, #30f); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+        .surreal-box { background: radial-gradient(circle, #ff0, #f00); border-radius: 50%; width: 250px; margin: auto; }
+        .pop-box { background: white; color: black; background-image: radial-gradient(black 20%, transparent 20%); background-size: 20px 20px; }
+        .op-box { background: repeating-radial-gradient(black, white 10px, black 20px); animation: pulse-op 2s infinite linear; }
+        .abstract-box { background: #111; }
+
+        /* --- ZONAS ESPECÍFICAS SIN CURSOR NATIVO --- */
+        #fractal-canvas, #gen-canvas {
+            cursor: none; /* Solo ocultar cursor nativo sobre los canvas interactivos */
+        }
+
+        /* --- 8. FRASES POÉTICAS --- */
+        .poetry-text {
+            font-size: 2rem;
+            max-width: 800px;
+            text-align: center;
+            opacity: 0;
+            filter: blur(10px);
+            transform: scale(0.8);
+            transition: 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .poetry-visible {
+            opacity: 1;
+            filter: blur(0);
+            transform: scale(1);
+            animation: text-smoke 3s infinite alternate;
+        }
+
+        /* --- ANIMACIONES GLOBALES --- */
+        @keyframes glitch-text {
+            0% { transform: translate(0); text-shadow: 4px 4px 0px var(--acid-purple); }
+            20% { transform: translate(-5px, 5px); text-shadow: -4px -4px 0px var(--acid-green); clip-path: inset(0 0 50% 0); }
+            40% { transform: translate(5px, -5px); text-shadow: 4px -4px 0px var(--acid-cyan); clip-path: inset(50% 0 0 0); }
+            60% { transform: translate(0); clip-path: inset(0 0 0 0); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes pulse-op {
+            0% { background-size: 100% 100%; }
+            50% { background-size: 150% 150%; }
+            100% { background-size: 100% 100%; }
+        }
+
+        @keyframes text-smoke {
+            from { text-shadow: 0 0 10px var(--acid-pink); filter: hue-rotate(0deg); }
+            to { text-shadow: 0 -20px 20px var(--acid-cyan); filter: hue-rotate(90deg); }
+        }
+
+        /* Efecto de ruido estático global */
+        .noise-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="noise-overlay"></div>
+    <div id="custom-cursor"></div>
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- WRAPPER 3D PARA EL EFECTO "REALIDAD DOBLEGADA" -->
+    <div id="world-wrapper">
+        
+        <!-- HERO -->
+        <section id="hero">
+            <h1>ARTE<br><span style="font-size:0.5em; color:var(--acid-green)">PSICODÉLICO</span></h1>
+            <p class="poetic-desc">Donde la realidad se dobla y los colores respiran.</p>
+            <p>Mueve el mouse para distorsionar la realidad. Haz scroll para mutar el universo.</p>
+            <button onclick="toggleNightMode()">🌑 Noche Cósmica</button>
+        </section>
+
+        <!-- 1. PAINT PSICODÉLICO EXTREMO -->
+        <section id="paint">
+            <h2>Lienzo Fractal</h2>
+            <p class="poetic-desc">Tu pincel es una varita mágica; la velocidad define la forma.</p>
+            <div class="canvas-container">
+                <canvas id="paint-canvas" width="800" height="500"></canvas>
+            </div>
+            <div style="margin-top:20px; display:flex; flex-wrap:wrap; justify-content:center;">
+                <button onclick="p_melt()">🫠 Derretir</button>
+                <button onclick="p_fracture()">⚡ Fracturar</button>
+                <button onclick="p_toggleKaleido()" id="btn-kaleido">🌀 Kaleido Mode: OFF</button>
+                <button onclick="p_clear()">❌ Borrar</button>
+            </div>
+        </section>
+
+        <!-- 6. ZONA FRACTAL -->
+        <section id="fractal-zone">
+            <h2>Vórtice Matemático</h2>
+            <p class="poetic-desc">La geometría sagrada reacciona a tu presencia.</p>
+            <canvas id="fractal-canvas" width="600" height="600" style="border-radius:50%; box-shadow: 0 0 50px var(--acid-purple);"></canvas>
+        </section>
+
+        <!-- 4. JUEGO ARTE VIVO XL -->
+        <section id="game">
+            <h2>Collage Animado (Gravedad Cero)</h2>
+            <p class="poetic-desc">Formas libres en el vacío. Crea tu propia composición viva.</p>
+            <div id="game-area"></div>
+            <p><small>Arrastra para lanzar | Clic para clonar | Doble clic para mutar estilo</small></p>
+        </section>
+
+        <!-- 5. GENERADOR MUTANTE -->
+        <section id="generator">
+            <h2>Generador de Visiones</h2>
+            <p class="poetic-desc">Deja que el caos organice la belleza.</p>
+            <canvas id="gen-canvas" width="500" height="500" style="border: 2px solid white;"></canvas>
+            <div style="margin-top:10px;">
+                <button onclick="g_generate()">👁️ Revelar Visión</button>
+                <button onclick="g_toggleHypno()" id="btn-hypno">😵 Hipnosis: OFF</button>
+            </div>
+        </section>
+
+        <!-- 7. GALERÍA INTERACTIVA -->
+        <section id="gallery">
+            <h2>Galería de Estilos Vivientes</h2>
+            <p class="poetic-desc">Toca los movimientos artísticos y observa cómo reaccionan.</p>
+            <div class="gallery-grid">
+                <div class="style-box cubism-box" onmousemove="cubismEffect(this)" onmouseleave="resetStyle(this)">CUBISMO</div>
+                <div class="style-box surreal-box" onmouseenter="surrealMelt(this)">SURREAL</div>
+                <div class="style-box pop-box" onclick="popExplode(this)">POP ART!</div>
+                <div class="style-box op-box">OP ART</div>
+                <div class="style-box abstract-box" id="abstract-container">ABSTRACTO</div>
+            </div>
+        </section>
+
+        <!-- 8. POESÍA CÓSMICA -->
+        <section id="poetry">
+            <h2>Oráculo Poético</h2>
+            <div class="poetry-text" id="poem-display">"El silencio es un color que aún no has inventado."</div>
+            <button onclick="newPoem()">✨ Revelación Cósmica</button>
+        </section>
+
+    </div>
+
+    <script>
+        // --- SISTEMA DE AUDIO (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type, freq, duration) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = type; // 'sine', 'square', 'sawtooth', 'triangle'
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // --- MOUSE Y 3D TILT ---
+        const cursor = document.getElementById('custom-cursor');
+        const world = document.getElementById('world-wrapper');
+        let mouseX = 0, mouseY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            // Mover cursor
+            cursor.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+            
+            // Trail
+            if(Math.random() > 0.5) createTrail(mouseX, mouseY);
+
+            // 3D Tilt Effect
+            const xPercent = (mouseX / window.innerWidth) - 0.5;
+            const yPercent = (mouseY / window.innerHeight) - 0.5;
+            world.style.transform = `rotateY(${xPercent * 5}deg) rotateX(${-yPercent * 5}deg)`;
+        });
+
+        // Scroll reactivo (Cambio de color global)
+        window.addEventListener('scroll', () => {
+            const scrollPercent = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+            const hueShift = scrollPercent * 360;
+            document.body.style.filter = `hue-rotate(${hueShift}deg)`;
+        });
+
+        document.addEventListener('mousedown', () => {
+            cursor.style.transform += ' scale(0.8)';
+            cursor.style.backgroundColor = 'white';
+            playSound('triangle', 300 + Math.random()*500, 0.2);
+        });
+
+        document.addEventListener('mouseup', () => {
+            cursor.style.backgroundColor = 'transparent';
+        });
+
+        function createTrail(x, y) {
+            const dot = document.createElement('div');
+            dot.classList.add('cursor-trail');
+            dot.style.left = x + 'px';
+            dot.style.top = y + 'px';
+            dot.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            document.body.appendChild(dot);
+            setTimeout(() => dot.remove(), 500);
+        }
+
+        // --- FONDO VIVO (PARTÍCULAS Y ONDAS) ---
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let bgW, bgH;
+        let particles = [];
+
+        function resizeBg() {
+            bgW = bgCanvas.width = window.innerWidth;
+            bgH = bgCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeBg);
+        resizeBg();
+
+        class CosmoParticle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * bgW;
+                this.y = Math.random() * bgH;
+                this.size = Math.random() * 3;
+                this.speed = Math.random() * 2 + 0.5;
+                this.angle = Math.random() * Math.PI * 2;
+                this.hue = Math.random() * 360;
+                this.life = 0;
+            }
+            update() {
+                // Movimiento fluido tipo Perlin Noise simplificado
+                this.angle += (Math.random() - 0.5) * 0.2;
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+                this.hue += 1;
+                this.life++;
+
+                // Interacción ratón
+                const dx = this.x - mouseX;
+                const dy = this.y - mouseY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 150) {
+                    this.angle = Math.atan2(dy, dx);
+                    this.speed = 5;
+                } else {
+                    this.speed = Math.max(0.5, this.speed * 0.98); // Friction
+                }
+
+                if (this.x < 0 || this.x > bgW || this.y < 0 || this.y > bgH || this.life > 400) this.reset();
+            }
+            draw() {
+                bgCtx.fillStyle = `hsla(${this.hue}, 80%, 60%, 0.6)`;
+                bgCtx.beginPath();
+                bgCtx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+                bgCtx.fill();
+            }
+        }
+
+        for(let i=0; i<300; i++) particles.push(new CosmoParticle());
+
+        function animateBg() {
+            // No limpiar completamente para dejar estela suave
+            bgCtx.fillStyle = 'rgba(5, 0, 16, 0.05)'; 
+            if(document.body.classList.contains('night-mode')) bgCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            
+            bgCtx.fillRect(0, 0, bgW, bgH);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateBg);
+        }
+        animateBg();
+
+
+        // --- 1. PAINT PSICODÉLICO ---
+        const pCanvas = document.getElementById('paint-canvas');
+        const pCtx = pCanvas.getContext('2d');
+        let painting = false;
+        let lastX = 0, lastY = 0;
+        let pHue = 0;
+        let kaleido = false;
+
+        function p_resize() {
+            // Evitar resetear el contenido al redimensionar si es posible, o guardar imagen
+        }
+        
+        pCanvas.addEventListener('mousedown', e => {
+            painting = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        });
+        
+        pCanvas.addEventListener('mousemove', e => {
+            if(!painting) return;
+            const x = e.offsetX;
+            const y = e.offsetY;
+            const dist = Math.hypot(x - lastX, y - lastY);
+            const lineWidth = Math.max(2, 40 - dist); // Velocidad = grosor
+
+            pCtx.lineWidth = lineWidth;
+            pCtx.lineCap = 'round';
+            pCtx.strokeStyle = `hsl(${pHue}, 100%, 50%)`;
+            pCtx.shadowBlur = 10;
+            pCtx.shadowColor = pCtx.strokeStyle;
+
+            if (kaleido) {
+                const centerX = pCanvas.width / 2;
+                const centerY = pCanvas.height / 2;
+                const sides = 6;
+                const angleStep = (Math.PI * 2) / sides;
+                
+                pCtx.save();
+                pCtx.translate(centerX, centerY);
+                
+                for(let i=0; i<sides; i++) {
+                    pCtx.rotate(angleStep);
+                    pCtx.beginPath();
+                    // Ajustar coordenadas relativas al centro
+                    pCtx.moveTo(lastX - centerX, lastY - centerY);
+                    pCtx.lineTo(x - centerX, y - centerY);
+                    pCtx.stroke();
+                }
+                pCtx.restore();
+            } else {
+                pCtx.beginPath();
+                pCtx.moveTo(lastX, lastY);
+                pCtx.lineTo(x, y);
+                pCtx.stroke();
+            }
+
+            [lastX, lastY] = [x, y];
+            pHue+=2;
+            playSound('sine', 200 + (y/2), 0.05); // Sonido al pintar
+        });
+
+        window.addEventListener('mouseup', () => painting = false);
+
+        function p_clear() { pCtx.clearRect(0,0, pCanvas.width, pCanvas.height); }
+        
+        function p_melt() {
+            // Copiar imagen, moverla un poco abajo con distorsión
+            const imageData = pCtx.getImageData(0, 0, pCanvas.width, pCanvas.height);
+            // Simulación simple: volver a dibujar con offset y ligera rotación
+            pCtx.globalAlpha = 0.9;
+            pCtx.drawImage(pCanvas, (Math.random()-0.5)*5, 2, pCanvas.width + (Math.random()-0.5)*5, pCanvas.height + 2);
+            pCtx.globalAlpha = 1.0;
+        }
+
+        function p_fracture() {
+            const w = pCanvas.width;
+            const h = pCanvas.height;
+            for(let i=0; i<10; i++) {
+                const x = Math.random() * w;
+                const y = Math.random() * h;
+                const sw = Math.random() * 100 + 50;
+                const sh = Math.random() * 100 + 50;
+                const dx = (Math.random() - 0.5) * 50;
+                const dy = (Math.random() - 0.5) * 50;
+                
+                // Extraer trozo y moverlo
+                const chunk = pCtx.getImageData(x, y, sw, sh);
+                pCtx.putImageData(chunk, x + dx, y + dy);
+                
+                // Dibujar bordes de fractura
+                pCtx.strokeStyle = 'white';
+                pCtx.strokeRect(x+dx, y+dy, sw, sh);
+            }
+        }
+
+        function p_toggleKaleido() {
+            kaleido = !kaleido;
+            document.getElementById('btn-kaleido').innerText = kaleido ? "🌀 Kaleido Mode: ON" : "🌀 Kaleido Mode: OFF";
+        }
+
+
+        // --- 6. ZONA FRACTAL INTERACTIVA ---
+        const fCanvas = document.getElementById('fractal-canvas');
+        const fCtx = fCanvas.getContext('2d');
+        let fTime = 0;
+
+        function drawFractal() {
+            const w = fCanvas.width;
+            const h = fCanvas.height;
+            // Limpieza con trail
+            fCtx.fillStyle = 'rgba(0,0,0,0.2)';
+            fCtx.fillRect(0,0,w,h);
+            
+            fCtx.save();
+            fCtx.translate(w/2, h/2);
+            
+            // Distorsión por mouse
+            const distM = (mouseX / window.innerWidth) * 2;
+            
+            for(let i=0; i<30; i++) {
+                fCtx.rotate(fTime * 0.0005 * (i%2==0 ? 1 : -1) + distM);
+                fCtx.beginPath();
+                const radius = 20 + i * 8 + Math.sin(fTime * 0.05 + i)*10;
+                
+                // Color cíclico
+                fCtx.strokeStyle = `hsl(${(fTime*2 + i*10)%360}, 100%, 50%)`;
+                fCtx.lineWidth = 2;
+                
+                // Dibujar forma (polígono rotante)
+                for(let j=0; j<6; j++) {
+                    const ang = (Math.PI*2/6) * j;
+                    const rx = Math.cos(ang) * radius;
+                    const ry = Math.sin(ang) * radius;
+                    if(j===0) fCtx.moveTo(rx, ry);
+                    else fCtx.lineTo(rx, ry);
+                }
+                fCtx.closePath();
+                fCtx.stroke();
+            }
+            fCtx.restore();
+            
+            fTime++;
+            requestAnimationFrame(drawFractal);
+        }
+        drawFractal();
+
+
+        // --- 4. JUEGO ARTE VIVO XL (COLLAGE ANIMADO) ---
+        const gameArea = document.getElementById('game-area');
+        let entities = [];
+
+        class Entity {
+            constructor(x, y) {
+                this.element = document.createElement('div');
+                this.element.classList.add('game-entity');
+                this.w = Math.random() * 80 + 30;
+                this.h = this.w;
+                this.element.style.width = this.w + 'px';
+                this.element.style.height = this.h + 'px';
+                
+                // Estilo aleatorio
+                this.type = Math.floor(Math.random()*4);
+                if(this.type === 0) this.element.style.borderRadius = '50%';
+                else if(this.type === 2) this.element.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+                else if(this.type === 3) this.element.style.borderRadius = '50% 20% / 10% 40%';
+                
+                this.color = `hsl(${Math.random()*360}, 100%, 50%)`;
+                this.element.style.backgroundColor = this.color;
+                
+                // Física
+                this.x = x || Math.random() * (gameArea.clientWidth - this.w);
+                this.y = y || Math.random() * (gameArea.clientHeight - this.h);
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                
+                // Eventos
+                this.isDragging = false;
+                this.element.addEventListener('mousedown', (e) => this.dragStart(e));
+                this.element.addEventListener('dblclick', (e) => this.mutate(e));
+                
+                gameArea.appendChild(this.element);
+                entities.push(this);
+            }
+
+            update() {
+                if(this.isDragging) return;
+
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Rebote
+                if(this.x <= 0 || this.x >= gameArea.clientWidth - this.w) {
+                    this.vx *= -1;
+                    playSound('square', 100, 0.1);
+                }
+                if(this.y <= 0 || this.y >= gameArea.clientHeight - this.h) {
+                    this.vy *= -1;
+                    playSound('square', 100, 0.1);
+                }
+                
+                this.element.style.left = this.x + 'px';
+                this.element.style.top = this.y + 'px';
+                this.element.style.transform = `rotate(${this.x}deg)`;
+            }
+
+            dragStart(e) {
+                e.stopPropagation();
+                // Si se presiona sin arrastrar, es un clic para clonar
+                let startX = e.clientX;
+                let startY = e.clientY;
+                this.isDragging = true;
+                
+                const onMove = (mv) => {
+                    // Arrastrar
+                    const rect = gameArea.getBoundingClientRect();
+                    this.x = mv.clientX - rect.left - this.w/2;
+                    this.y = mv.clientY - rect.top - this.h/2;
+                    this.element.style.left = this.x + 'px';
+                    this.element.style.top = this.y + 'px';
+                    // Resetear velocidad al soltar para "lanzar"
+                    this.vx = (mv.movementX || 0);
+                    this.vy = (mv.movementY || 0);
+                };
+
+                const onUp = (up) => {
+                    this.isDragging = false;
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('mouseup', onUp);
+                    
+                    // Si apenas se movió, clonar
+                    if(Math.hypot(up.clientX - startX, up.clientY - startY) < 5) {
+                        new Entity(this.x + 20, this.y + 20);
+                        playSound('sine', 600, 0.1);
+                    }
+                };
+
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', onUp);
+            }
+
+            mutate(e) {
+                e.stopPropagation();
+                this.element.style.filter = "invert(1) blur(2px) contrast(2)";
+                this.element.style.transform += " scale(1.5) rotate(45deg)";
+                this.vx = 0; this.vy = 0; // Freeze effect
+                playSound('sawtooth', 50, 0.5);
+            }
+        }
+
+        // Loop del juego
+        function gameLoop() {
+            entities.forEach(e => e.update());
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Iniciar con 6 entidades
+        for(let i=0; i<6; i++) new Entity();
+        gameLoop();
+
+
+        // --- 5. GENERADOR MUTANTE ---
+        const gCanvas = document.getElementById('gen-canvas');
+        const gCtx = gCanvas.getContext('2d');
+        let hypnoMode = false;
+        let hypnoAngle = 0;
+
+        function g_generate() {
+            // Reset transforms
+            gCtx.setTransform(1, 0, 0, 1, 0, 0);
+            gCtx.clearRect(0,0,500,500);
+            
+            // Background aleatorio
+            gCtx.fillStyle = `hsl(${Math.random()*360}, 50%, 10%)`;
+            gCtx.fillRect(0,0,500,500);
+
+            const shapes = Math.floor(Math.random() * 20) + 10;
+            
+            for(let i=0; i<shapes; i++) {
+                gCtx.fillStyle = `hsla(${Math.random()*360}, 100%, 50%, ${Math.random()})`;
+                gCtx.beginPath();
+                const type = Math.random();
+                const x = Math.random() * 500;
+                const y = Math.random() * 500;
+                const s = Math.random() * 100;
+
+                if(type < 0.33) gCtx.arc(x,y, s, 0, Math.PI*2);
+                else if(type < 0.66) gCtx.fillRect(x, y, s, s);
+                else {
+                    gCtx.moveTo(x, y);
+                    gCtx.lineTo(x+s, y+s);
+                    gCtx.lineTo(x-s, y+s);
+                }
+                gCtx.fill();
+            }
+            
+            // Efecto Glitch visual (líneas scan)
+            for(let i=0; i<500; i+=4) {
+                gCtx.fillStyle = "rgba(0,0,0,0.2)";
+                gCtx.fillRect(0, i, 500, 1);
+            }
+
+            playSound('sawtooth', 200 + Math.random()*800, 0.3);
+        }
+
+        function g_toggleHypno() {
+            hypnoMode = !hypnoMode;
+            document.getElementById('btn-hypno').innerText = hypnoMode ? "😵 Hipnosis: ON" : "😵 Hipnosis: OFF";
+            if(hypnoMode) animateHypno();
+        }
+
+        function animateHypno() {
+            if(!hypnoMode) return;
+            // Capturar el canvas actual, rotarlo y redibujarlo con zoom in/out
+            const temp = document.createElement('canvas');
+            temp.width = 500; temp.height = 500;
+            temp.getContext('2d').drawImage(gCanvas, 0, 0);
+
+            gCtx.clearRect(0,0,500,500);
+            gCtx.save();
+            gCtx.translate(250, 250);
+            gCtx.rotate(0.02);
+            gCtx.scale(1.01, 1.01); // Zoom infinito lento
+            gCtx.translate(-250, -250);
+            gCtx.drawImage(temp, 0, 0);
+            
+            // Ciclo de color global
+            gCtx.globalCompositeOperation = 'source-atop';
+            gCtx.fillStyle = `hsla(${hypnoAngle%360}, 100%, 50%, 0.01)`;
+            gCtx.fillRect(0,0,500,500);
+            gCtx.globalCompositeOperation = 'source-over';
+            
+            gCtx.restore();
+            
+            hypnoAngle++;
+            if(hypnoMode) requestAnimationFrame(animateHypno);
+        }
+        g_generate();
+
+
+        // --- 7. GALERÍA DE ESTILOS ---
+        function cubismEffect(el) {
+            el.style.clipPath = `polygon(${Math.random()*30}% 0, 100% ${Math.random()*30}%, ${100-Math.random()*30}% 100%, 0 ${100-Math.random()*30}%)`;
+            el.style.transform = `translate(${Math.random()*10-5}px, ${Math.random()*10-5}px)`;
+        }
+        function resetStyle(el) {
+            el.style.clipPath = 'polygon(0 0, 100% 0, 100% 100%, 0 100%)';
+            el.style.transform = 'none';
+        }
+        
+        function surrealMelt(el) {
+            el.style.transition = '2s';
+            el.style.borderRadius = '40% 60% 70% 30% / 40% 50% 60% 50%';
+            el.style.transform = 'scaleY(1.2) rotate(10deg)';
+            el.style.filter = 'hue-rotate(180deg) blur(2px)';
+        }
+
+        function popExplode(el) {
+            playSound('square', 150, 0.1);
+            // Crear partículas DOM
+            for(let i=0; i<10; i++) {
+                const p = document.createElement('div');
+                p.style.position = 'absolute';
+                p.style.left = el.offsetLeft + el.offsetWidth/2 + 'px';
+                p.style.top = el.offsetTop + el.offsetHeight/2 + 'px';
+                p.style.width = '20px'; p.style.height = '20px';
+                p.style.background = ['red', 'yellow', 'blue'][Math.floor(Math.random()*3)];
+                p.style.borderRadius = '50%';
+                p.style.zIndex = 100;
+                p.style.transition = '1s';
+                document.body.appendChild(p);
+                
+                setTimeout(() => {
+                    p.style.transform = `translate(${(Math.random()-0.5)*300}px, ${(Math.random()-0.5)*300}px) scale(0)`;
+                }, 10);
+                setTimeout(() => p.remove(), 1000);
+            }
+        }
+
+        // --- ABSTRACTO CÓSMICO (PARTICULAS DENTRO DE DIV) ---
+        const absBox = document.getElementById('abstract-container');
+        absBox.addEventListener('mousemove', (e) => {
+             const d = document.createElement('div');
+             d.style.width = '10px'; d.style.height = '10px';
+             d.style.background = 'white';
+             d.style.position = 'absolute';
+             d.style.left = (e.clientX - absBox.getBoundingClientRect().left) + 'px';
+             d.style.top = (e.clientY - absBox.getBoundingClientRect().top) + 'px';
+             d.style.borderRadius = '50%';
+             d.style.animation = 'fadeOut 1s forwards';
+             absBox.appendChild(d);
+             setTimeout(()=>d.remove(), 1000);
+        });
+
+
+        // --- 8. POESÍA DINÁMICA ---
+        const poems = [
+            "Tus ojos son fractales de un universo olvidado.",
+            "El tiempo se derrite como cera sobre la memoria.",
+            "Respiramos colores, exhalamos sombras.",
+            "La gravedad es solo una sugerencia de la mente.",
+            "Somos polvo de estrellas soñando que somos humanos.",
+            "El arte es la mentira que nos hace ver la verdad.",
+            "Cada trazo es un suspiro del universo."
+        ];
+        
+        function newPoem() {
+            const pText = document.getElementById('poem-display');
+            pText.classList.remove('poetry-visible');
+            
+            setTimeout(() => {
+                pText.innerText = poems[Math.floor(Math.random() * poems.length)];
+                pText.classList.add('poetry-visible');
+                playSound('sine', 440, 0.5); // Sonido de revelación
+            }, 1000);
+        }
+        // Init
+        setTimeout(() => document.getElementById('poem-display').classList.add('poetry-visible'), 500);
+
+
+        // --- UTILIDADES GLOBALES ---
+        function toggleNightMode() {
+            document.body.classList.toggle('night-mode');
+        }
+
+    </script>
+</body>
+</html>
